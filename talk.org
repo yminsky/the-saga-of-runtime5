@@ -1,4 +1,79 @@
 #+TITLE: The Saga of Runtime5
 
+Abstract:
 
+    In December 2022, after nearly a decade of development, OCaml
+    5.0.0 was released with OCaml’s first multi-core capable
+    runtime. This was an exciting milestone, finally making it
+    possible to write shared-memory parallel programs in OCaml. The
+    new runtime was designed to be easy to adopt: it didn’t disturb
+    OCaml’s FFI, and performance was meant to be only a couple of
+    percentage points slower in single-core mode.
 
+    Despite those promising beginnings, switching to runtime-5 was
+    harder than we expected. Indeed, We’ve only managed to switch to
+    it this year, after months and months of research and engineering
+    effort to make it work for our use-cases.
+
+    This talk will give an overview of the problems we ran into, and
+    why switching to runtime-5 was so much harder than we
+    expected. We’ll also discuss what we learned from the process,
+    both about how to stage a complex change like this, as well as
+    some new things we learned about how to design a GC, and the
+    improvements we landed in OCaml as part of that work.
+
+* The history
+
+  - 2013: OCaml Multicore Project is founded
+  - 2022: OCaml 5.0 is released with multicore support
+  
+* Lessons
+** Benchmarking is hard
+
+Even systems with benchmarks showing good performance can show serious
+regressions on your programs. Even if the benchmarks were great, maybe
+your programs don't look like any of them.
+
+** Debugging is hard
+
+When looking for the source of a small regression it is easy to chase
+after the first reasonable explanation for the behaviour. We lost a
+lot of time early on implementing full solutions to issues that didn't
+turn out to be the problem. We should have done more experiments to
+estimate the potential effect size of the problem to verify that it
+really might be the explanation for what we were seeing. This can be
+done with hand-crafted benchmarks that should be pathological for the
+problem being investigated, or with quick hacked-up prototypes of
+fixes, or with quick hacked-up prototypes that make the problem much
+worse to check that it actually matters.
+
+** Project management is Hard
+
+It took us a long time to go from realizing that this was going to be
+harder than we thought to actually adding more resources to solving
+the problem.
+
+** Deployment is hard
+
+We asked users for benchmarks and to try out the new runtime. From
+that we had reason to expect at most modest regressions when switching
+the default. We also tried to stage our rollout using
+COMPILER_BETA_SYSTEMS, and hadn't seen any show stopper issues from
+that. Even so, upon switching the default we immediately had reports
+of programs OOMing and had to roll it back. This was not necessarily a
+mistake -- we quickly gained a lot of information without causing
+major harm -- but it did not exactly go smoothly and probably isn't
+the best way to do something like this. We're now investigating how to
+stage our rollouts more effectively.
+
+** Backwards compatibility is hard
+
+With enough users, people start relying on pathological behaviours in
+the previous system. The custom block heuristics were completely
+broken in 4, but people were relying on that -- rather than the space
+overhead parameter -- to make the GC aggressive enough to keep their
+program's memory usage within the capacity of their machines. This
+gives an excellent excuse to include this xkcd in your slides:
+
+#+CAPTION: Every change breaks someone's workflow
+[[./workflow.png]]
