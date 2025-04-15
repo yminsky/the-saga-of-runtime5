@@ -2,13 +2,13 @@
 
 Abstract:
 
-    In December 2022, after nearly a decade of development, OCaml
-    5.0.0 was released with OCaml’s first multi-core capable
-    runtime. This was an exciting milestone, finally making it
-    possible to write shared-memory parallel programs in OCaml. The
-    new runtime was designed to be easy to adopt: it didn’t disturb
-    OCaml’s FFI, and performance was meant to be only a couple of
-    percentage points slower in single-core mode.
+    In December 2022, after nearly a decade of development, OCaml 5.0
+    was released with OCaml’s first multi-core capable runtime. This
+    was an exciting milestone, finally making it possible to write
+    shared-memory parallel programs in OCaml. The new runtime was
+    designed to be easy to adopt: it didn’t disturb OCaml’s FFI, and
+    performance was meant to be only a couple of percentage points
+    slower in single-core mode.
 
     Despite those promising beginnings, switching to runtime-5 was
     harder than we expected. Indeed, We’ve only managed to switch to
@@ -22,10 +22,159 @@ Abstract:
     some new things we learned about how to design a GC, and the
     improvements we landed in OCaml as part of that work.
 
+* Stream of consciousness
+
+- The goal of this talk is to explain why switching to a new runtime
+  for a programming language is harder than it may seem.
+- Case-in-point: the OCaml GC
+  - OCaml is an old language, 30 years old!
+  - For most of that existence, no multicore GC
+  - A project to change that was started in (gulp) 2013
+  - And "completed" with the GC being merged in 2022.
+  - 9 years later!
+- There are lots of reasons why this could be hard!
+  - Data races are hard!
+  - Multicore garbage collectors are complex and can have many subtle
+    bugs and race conditions.
+  - Neither OCaml nor its libraries was built over the last 30 years
+    with any expectation of multicore, so data races are everywhere.
+  - Reasoning about performance of parallel programs is hard.
+  - ...
+  - And I'm not going to talk about any of that.
+  - I'm just going to focus on the surprising complexity of moving to
+    a genuinely new GC, and how much harder that can be at scale than
+    you might imagine.
+
+
+
 * The history
 
-  - 2013: OCaml Multicore Project is founded
-  - 2022: OCaml 5.0 is released with multicore support
+** OCaml Multicore Project is founded (2013)
+** OCaml 5.0 is released with multicore support (2022)
+** Waited for some further things to land
+ - Some things that didn't make it for the OCaml 5.0
+   - Software prefetching (2-3x perf improvement!)
+   - Statmemprof
+   - Compaction
+** Forward-porting Runtime4 (Nov-Dec 2023)
+ - Switching to a new runtime is a big deal, so we wanted to make it
+   possible tom migrate incrementally, without falling behind on OCaml
+   advances upstream.
+ - So, we upgraded to OCaml 5.1, and made 5.1 capable of running both
+   runtime4 (ocaml5-minus) and runtime5.
+** Testing Runtime5 performance (Dec 2023 - Feb 2024)
+ - Overall, Runtime5 seemed a lot slower!
+ - The paper advertised no more than a 5% reduction in performance
+   (which is kinda big already)
+ - But we were seeing much bigger slowdown, in the vicinity of 20%.
+ - And then we had to figure out what was actually wrong!
+   - stack checks
+     - Actually turned them off, don't really know how much this
+       affected things.
+     - Just a bounds check on whether a function is beyond its stack
+     - Normally just done by virtual memory, guard pages. That's super
+       expensive for lots of stacks, because they keep on hitting the
+       overflow path.
+     - plans for lowering the costs, but haven't done it yet.
+     - Maybe we'll have two config options.
+   - transparent huge pages (THP): we observe the ocaml 5 runtime is
+     not mmap'ing big enough chunks to get pools backed by hugepages
+     - Major heap grows in small increments in runtime5. Just a mistake!
+     - Linux kernel wasn't good at coalescing huge pages
+     - (Dolan wrote a long blog post)
+     - Took 12 years to get a patch to pick well aligned addresses!
+     - Minor heap is important too!
+     - Needs minor heaps close to each other with nothing else, so you
+       can do a single pointer check.
+     - 4 happened to get huge pages usually, because coalescing worked out.
+     - But runtime5 makes it never near anything else.
+     - Weird program that made a 3x difference in runtime.
+     - Instead, allocate one big region for all the minor heaps, and
+       then shift around the edges to get things aligned, so you can
+       set guard pages appropriately.
+     - Scarce resource again: level-1 TLB, of which there are only
+       8-10 entries(!). (one per core, so, we're fine)
+     - Cost difference: 3 cycles for level-1, 15-20 cycles for level-2.
+     - And the level-1 thing happens in parallel(!) with the lookup.
+     - Low-12 bits of the address won't change. And you look up the N
+       possibilities by the low-12 bits of the cache.
+   - the possibility that compaction will make THP even worse
+     - OCaml 5 compaction would give memory back in small pieces.
+     - But it wouldn't make things contiguous globabally.
+     - Tried to make 32k chunks that were compact.
+   - Was this stuff known?
+     - No! We've talked to Damien a lot. He was surprised!
+     - THP wasn't even there at the time.
+     - But he did have the good sense to stay away from VM games.
+** Common theme
+ - Jane Street programs are like each other, and unlike other ocaml programs.
+ - Async thread pool leads to lots of context switching between
+   systhreads, because it's determined never to block the process, and
+   is willing to spend a lot of throughput to get there.
+ - Heavy use of bigarrays.
+ - Running for 20 years in production on machines with THP manually
+   disabled from a bad old kernel.
+   - Actually, the 'try very hard' option was disabled.
+   - Workarounds in the runtime so that setting doesn't matter
+   - And convinced core services to get rid of the patch, but not sure
+     it's happened yet?
+ - But actually, it was slow for everyone.
+   - The bigarray stuff was broken for everyone, but JS saw it more.
+ - Also, weak-pointer stuff was creating huge problems for Lexifi.
+** Overhead in context-switching between systhreads
+ - That was 10% slowdown in Iron startup
+ - Systhreads were added as something of an after thought in OCaml 5,
+   mostly for compatibility reasons.
+ - In particular, there were some performance bugs around logic for
+   checking whether unix signal has arrived, and that would cause
+   threads to reacquire locks and bounce back and forth between them.
+** Markdelay patch
+ - GC works by marking, then sweeping
+ - If you allocate and discard stuff during marking, you're not going
+   to be able to sweep it next cycle.
+ - But...during sweeping, you should be able to notice it in the next
+   mark phase, and then collect it in the following phase.
+ - OCaml 4 does this right. OCaml 5 kind of combined marking and
+   sweeping in an interesting way, so stuff was kept alive for 2 whole
+   cycles.
+ - Markdelay patch separated the phases a bit more.
+ - We were aware of that tradeoff when developing OCaml 5, but didn't
+   realize how big of a deal it was. It accounts for 10%-30% of memory use.
+ - Basically this was to remove a synchronization point. Following the
+   "very concurrent garbage collector" design.
+ - But we greatly overestimated the quick stop-the-world, and it's
+   pretty cheap. Cost grows with log of number of domains, not
+   linearly. Extra pauses are surprisingly cheap.
+** Iron Startup (very recent)
+ - GC Pacing
+ - You can do it incrementally, you need to choose when to do it.
+ - You want to be done at 'around the right time'
+ - So memory use doesn't go up too high, and so you don't waste CPU.
+ - "doing the right thing" and "matching runtime4" is incompatible.
+ - Especially with bigstrings (custom blocks) being cycled through.
+ - "improvement" to runtime5 made it respond more accurately to
+   requests to do extra work.
+   - Pushed it to run faster; do a whole extra cycle when you allocate
+     a heap's worth of bigarrays.
+   - But if there are a ton of short-lived bigarrays, it just gave the
+     wrong answer.
+   - There was a bug in runtime4 in how this was implemented. It was
+     implemented "right" in runtime5, but that was actually just more
+     wrong.
+ - We were able to fix it by just thinking harder about the maths.
+   - Is there something truly novel here?
+   - We're not sure if this generalizes to something really
+     novel.  Still need to figure it out.
+   - Something Damien got very right was the user-interface for
+     configuring the GC. Configuring the GC with space overhead.
+   - Other GCs give them an absolute number. This is a much worse
+     guide. It only works for big enterprise java systems.
+ - square-root thing.
+   - three ways of seeing it:
+   - Not yet confirmed by experiment, but haven't really tested it
+     seriously yet.
+
+   
   
 * Lessons
 ** Benchmarking is hard
