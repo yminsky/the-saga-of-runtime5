@@ -65,6 +65,8 @@ What is OCaml's GC like?
 - Sequential
 - Generational
 - Incremental
+- Snapshot-at-the-beginning
+- With a write-barrier
 - Closed-loop pacing via a steady-state analysis
 - Tuned by space-overhead
 - Supporting external memory
