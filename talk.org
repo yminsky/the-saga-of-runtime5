@@ -49,6 +49,7 @@ Abstract:
 
 * The history
 
+
 ** OCaml Multicore Project is founded (2013)
 ** OCaml 5.0 is released with multicore support (2022)
 ** Waited for some further things to land
@@ -226,3 +227,25 @@ gives an excellent excuse to include this xkcd in your slides:
 
 #+CAPTION: Every change breaks someone's workflow
 [[./workflow.png]]
+
+* Talk
+
+** What was OCaml's GC Like?
+
+As of OCaml 4.14:
+
+#+pause
+- Generational 
+#+pause
+- Incremental
+#+pause
+- Single-threaded
+#+pause
+- Tuned by *space overhead*
+#+pause
+- With *closed-loop pacing* set by a *steady-state analysis*
+#+pause
+- Supporting external memory (via custom blocks)
+
+#+pause
+As of OCaml 
