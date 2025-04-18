@@ -19,11 +19,18 @@ Goals
     - Don't break sequential performance
     - Maintain low pause times
     - Good parallel speedups
+    - Don't break the FFI
 
 <span style="color:green">**Retrofitting Parallelism onto OCaml**</span>, ICFP 2020
 
+<!-- speaker_note: The results are pretty good! -->
 
-History
+- Performance loss of ~3% for sequential programs
+- Pause times very similar
+- Memory sizes similar-or-better
+- Good speedups
+
+It did take a while, though...
 -------
 
 - 2013: OCaml Multicore project born
@@ -63,8 +70,8 @@ What is OCaml's GC like?
 # Runtime 4
 
 - Sequential
-- Generational
 - Incremental
+- Generational
 - Snapshot-at-the-beginning
 - With a write-barrier
 - Closed-loop pacing via a steady-state analysis
@@ -75,30 +82,99 @@ What is OCaml's GC like?
 # Runtime 5
 
 - ~~Sequential~~ Parallel
-- Shared major heap
-- One minor heap per domain
-- Merged mark/sweep design
-- With one (brief) stop-the-world sync per mark/sweep cycle
-- And safe-points to make sure everyone gets there.
-- And algebraic effects!
+- Minor heap
+  - One minor heap per domain
+  - stop-the-world collection
+- Major heap
+  - Shared heap
+  - Merged mark/sweep design
+  - Stop-the-world sync at cycle end
+- Safe-points
 
-What slowed us down
+What problems did we encounter?
 -------------------
 
-- Missing features (prefetching, statmemprof, compaction)
-- Large time-performance regressions: 10-20% on GC-intense programs
-  - And not just us! Other major users had hit similar slowdowns
-- Material slowdowns (10%) on GC-free applications (!?!)
+- Missing features (prefetching, statmemprof, compaction, ...)
+- 10-20% regressions on GC-intense programs
+- 10% regressions on zero-allocation applications
 
-# What were the problems?
+# What were the causes?
 
-- Stack checks were expensive
 - Transparent huge-pages weren't working
 - Context switching in systhreads were slow
 - GC pacing was off
+  - Due to changes to mark/sweep design
+  - and bad heuristics for external memory
 
-GC Pacing
----------
+Transparent Huge Pages
+----------------------
+
+<!-- incremental_lists: false -->
+<!-- pause -->
+
+Background
+
+- Traditional pages are 4kb, "Huge" pages are 2Mb (or 1GB)
+- Huge savings in TLB pressure
+- **Transparent** huge pages is when the OS does it for you,
+  implicitly
+
+<!-- pause -->
+What happened?
+
+- Worked in 4.14, failed under 5.0
+- Serious effect, 3x slowdown in pathological benchmark
+
+What happened to our hugepages?
+---------------------------
+
+<!-- column_layout: [1, 1] -->
+<!-- pause -->
+
+<!-- column: 0 -->
+
+# Runtime 4
+
+- Grow in big chunks
+- Compaction into one big space
+- No clever virtual-memory games
+
+<!-- column: 1 -->
+
+# Runtime 5
+
+- Grows in small increments
+- Compaction into 32k chunks
+- Guard pages to break up the minor heap
+
+<!-- reset_layout -->
+
+# Solution
+
+- Grow heap in big chunks instead
+- Compact into one big region
+- Carefully align minor heaps
+
+GC Pacing Problems
+------------------
+
+- Lots of programs consuming more memory (20%)
+- Programs using lots of external memory seeing large slowdowns
+
+How does pacing work?
+---------------------
+
+<!-- column_layout: [1, 1] -->
+<!-- pause -->
+
+<!-- column: 0 -->
+
+# Runtime 4
+
+- Closed loop control function
+
+
+
 
 GC Pacing Results
 -----------------
