@@ -79,6 +79,8 @@ What is OCaml's GC like?
 - One minor heap per domain
 - Merged mark/sweep design
 - With one (brief) stop-the-world sync per mark/sweep cycle
+- And safe-points to make sure everyone gets there.
+- And algebraic effects!
 
 What slowed us down
 -------------------
