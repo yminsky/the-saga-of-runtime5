@@ -46,6 +46,42 @@ Abstract:
     you might imagine.
 
 
+* Timeline
+
+# Timeline
+
+- 2013: project is officially launched
+- 2014-03: First commits are made to multciore GC.
+- 2019: Sandmark benchmarking suite created
+- 2022: OCaml Multicore lands upstream.
+- 2022-2023: Initial testing: Tarides did some benching using sandmark
+  ([https://github.com/ocaml-bench/sandmark](https://github.com/ocaml-bench/sandmark)). I
+  don't have much visibility into this, Leo or someone else would know
+  more.
+  - I'm not aware of any OCaml 5 benchmarking we did internally prior
+    to OCaml 5
+    minus. @[mshinwell@janestreet.com](mailto:mshinwell@janestreet.com)
+    do you know?
+- Nov-Dec 2023: We merge OCaml 5.1 back into our compiler. This is the
+  point that we start being able to use our compiler either as "OCaml
+  5 minus" (ocaml 5 frontend \+ ocaml 4 runtime) or "OCaml 5" (ocaml 5
+  frontend \+ ocaml 5 runtime).
+- Dec 2023-Feb 2024: we do a bunch of initial benchmarking and observe
+  various time/space regressions on different workloads. This is when
+  we identified these as potential issues:
+   + stack checks
+   + transparent huge pages (THP): we observe the ocaml 5 runtime is
+     not mmap'ing big enough chunks to get pools backed by hugepages
+   + the possibility that compaction will make THP even worse
+- Jan 2024: We switch compiler beta systems to use runtime 5\.
+- Mar 2024-Oct 2024: We continue doing a bunch of investigation /
+  fixing work. I don't have as much visibility into this bc I was
+  working on other things:
+   + @[mslater@janestreet.com](mailto:mslater@janestreet.com) looked
+     into pal testbed regressions
+- Nov 2024: we try rolling out the OCaml 5 runtime by default
+
+
 
 * The history
 
@@ -175,8 +211,8 @@ Abstract:
    - Not yet confirmed by experiment, but haven't really tested it
      seriously yet.
 
-   
-  
+
+
 * Lessons
 ** Benchmarking is hard
 
@@ -234,18 +270,11 @@ gives an excellent excuse to include this xkcd in your slides:
 
 As of OCaml 4.14:
 
-#+pause
-- Generational 
-#+pause
+- Generational
 - Incremental
-#+pause
 - Single-threaded
-#+pause
 - Tuned by *space overhead*
-#+pause
 - With *closed-loop pacing* set by a *steady-state analysis*
-#+pause
 - Supporting external memory (via custom blocks)
 
-#+pause
-As of OCaml 
+As of OCaml
