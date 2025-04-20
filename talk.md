@@ -8,22 +8,25 @@ options:
   incremental_lists: true
   auto_render_languages:
     - mermaid
+    - typst
+    - latex
 ---
 
 Goals
 -----
 
 - Build a modern, high-performance multicore GC for OCaml
-- In a way that's easy to adopt! So...
-    - Single, easy-to-maintain runtime
-    - Don't break sequential performance
-    - Maintain low pause times
-    - Good parallel speedups
-    - Don't break the FFI
+- Single, easy-to-maintain runtime
+- Good parallel speedups
+- That's easy to adopt!
+  - Preserving seuqential performance, pause times, FFI
+
 
 <span style="color:green">**Retrofitting Parallelism onto OCaml**</span>, ICFP 2020
 
 <!-- speaker_note: The results are pretty good! -->
+
+Lots of benchmarks!
 
 - Performance loss of ~3% for sequential programs
 - Pause times very similar
@@ -33,6 +36,9 @@ Goals
 It did take a while, though...
 -------
 
+<!-- incremental_lists: false -->
+<!-- pause -->
+
 - 2013: OCaml Multicore project born
 - 2015: "Effect Handlers for OCaml" presented at OCaml Workshop
 - 2019: Sandmark benchmark suite created
@@ -41,24 +47,25 @@ It did take a while, though...
 - 2021: "Retrofitting Effect Handlers to OCaml" published
 - 2022: OCaml 5.0 released with Multicore GC!
 
+<!-- pause -->
+
 9 years! But at least it's done.
 
 Or is it?
 ----------
 
+<!--
 - 2023-09: OCaml 5.1 released w/prefetching restored
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
 - 2023-12: JS benchmarks find serious performance regressions
 - 2024-05: OCaml 5.2 released w/compaction restored
 - 2025-01: OCaml 5.3 released w/statmemprof restored
 - 2025-05(?): Runtime5 made GA at Jane Street
+-->
 
-Another 2.5 years! What happened?
-
-<!-- pause -->
-
-And in particular, what about
-<span style="color:green">**the 1.5 years from 2023-12 to 2025-05?**</span>
+- 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
+- 2023-12: JS benchmarks find serious performance regressions
+- 2025-05(?): Runtime5 made GA at Jane Street
 
 What is OCaml's GC like?
 ------------------
@@ -128,6 +135,9 @@ What happened?
 What happened to our hugepages?
 ---------------------------
 
+<!-- speaker_note: And why does the old GC (invented before THP)
+     outperform the new one? -->
+
 <!-- column_layout: [1, 1] -->
 <!-- pause -->
 
@@ -171,28 +181,43 @@ How does pacing work?
 
 # Runtime 4
 
-- Closed loop control function
+- Constant amount of collection per word promoted.
+- External memory
+  - Mix of design and implementation bugs
+  - Design bugs => faster
+  - Impl bugs   => slower
 
 
+<!-- column: 1 -->
 
+# Runtime 5
+
+- Same pacing approach for ordinary allocations
+- Unified mark & sweep
+- Fixed a bunch of implementation bugs
+
+<!-- reset_layout -->
+
+# Results
+
+- Unified mark & sweep increased amount of floating garbage by ~25%
+- Bugfixes make GC way too aggressive
+
+Fixing pacing
+-------------
+
+- Broke mark & sweep into two phases again
+  - Turns out, synchronizations are cheaper than expected!
+- Tried to fix the design bugs incrementally
+  - Became more "closed-loop", harder to control
+- Redid the calculations, discovered there was simple, open-loop
+  solution for pacing!
 
 GC Pacing Results
 -----------------
 
 <!-- pause -->
 ![](./gc-pacing-graph.png)
-
-
-
-Performance debugging is hard
--------------
-
-Project management is hard
--------------
-
-
-Deployment is hard
--------------
 
 Backwards compatibility is hard
 -------------------------------
