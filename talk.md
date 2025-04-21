@@ -40,12 +40,13 @@ It did take a while, though...
 <!-- pause -->
 
 - 2013: OCaml Multicore project born
-- 2015: "Effect Handlers for OCaml" presented at OCaml Workshop
+- 2015: <span style="color:green">"Effect Handlers for OCaml"</span>
+  presented at OCaml Workshop
 - 2019: Sandmark benchmark suite created
-- 2020: "Retrofitting Parallelism onto OCaml" published
+- 2020: <span style="color:green">"Retrofitting Parallelism onto OCaml"</span> published
 - 2020: Core team commits to upstreaming multicore
-- 2021: "Retrofitting Effect Handlers to OCaml" published
-- 2022: OCaml 5.0 released with Multicore GC!
+- 2021: <span style="color:green">"Retrofitting Effect Handlers to OCaml"</span> published
+- 2022: OCaml 5.0 released with Multicore GC and Effects
 
 <!-- pause -->
 
@@ -184,8 +185,8 @@ How does pacing work?
 - Constant amount of collection per word promoted.
 - External memory
   - Mix of design and implementation bugs
-  - Design bugs => faster
-  - Impl bugs   => slower
+  - Design bugs => mostly more aggressive
+  - Impl bugs   => mostly less aggressive
 
 
 <!-- column: 1 -->
@@ -196,28 +197,51 @@ How does pacing work?
 - Unified mark & sweep
 - Fixed a bunch of implementation bugs
 
-<!-- reset_layout -->
-
-# Results
-
-- Unified mark & sweep increased amount of floating garbage by ~25%
-- Bugfixes make GC way too aggressive
-
-Fixing pacing
--------------
-
-- Broke mark & sweep into two phases again
-  - Turns out, synchronizations are cheaper than expected!
-- Tried to fix the design bugs incrementally
-  - Became more "closed-loop", harder to control
-- Redid the calculations, discovered there was simple, open-loop
-  solution for pacing!
-
 GC Pacing Results
 -----------------
 
-<!-- pause -->
-![](./gc-pacing-graph.png)
+![](./space_overhead_0.png)
+
+GC Pacing Results (rt4)
+-----------------
+
+![](./space_overhead_1.png)
+
+GC Pacing Results (rt5)
+-----------------
+
+![](./space_overhead_2.png)
+
+Markdelay
+----------------------------------
+
+- Unified mark & sweep => too much floating garbage
+- Up to 25%!
+
+
+GC Pacing Results (rt5)
+-----------------
+
+![](./space_overhead_2.png)
+
+GC Pacing Results (rt5-markdelay)
+-----------------
+
+![](./space_overhead_3.png)
+
+Open-loop pacing
+-----------------
+
+
+GC Pacing Results (rt5-markdelay)
+-----------------
+
+![](./space_overhead_3.png)
+
+GC Pacing Results (rt5-open-loop)
+-----------------
+
+![](./space_overhead_4.png)
 
 Backwards compatibility is hard
 -------------------------------
