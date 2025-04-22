@@ -18,15 +18,15 @@ Let's start with the paper
 <span style="color:green">**Retrofitting Parallelism onto OCaml**</span>, ICFP 2020
 
 - A modern, high-performance multi-core GC for OCaml
-- Single, easy-to-maintain runtime
-- That's easy to adopt!
+- Easy to maintain, easy to adopt.
+  - One runtime for parallel and sequential
   - Preserving sequential performance, pause times, FFI
 
 Lots of benchmarks and evaluation!
 
-- Performance loss of ~3% for sequential programs
+- Runtime loss of ~3% for sequential programs
+- Memory used is similar
 - Pause times very similar
-- Memory sizes similar-or-better
 - Good speedups
 
 It did take a while, though...
@@ -75,10 +75,11 @@ What is OCaml's GC like?
 # Runtime 4
 
 - Sequential
-- Incremental
 - Generational
-- Snapshot-at-the-beginning
 - With a write-barrier
+- Mark & Sweep
+- Incremental
+- Snapshot-at-the-beginning
 - Mostly open-loop pacing
 - Supporting external memory
 
@@ -95,8 +96,13 @@ What is OCaml's GC like?
   - Stop-the-world sync at cycle end
 - Safe-points
 
-Where did the regressions come from?
-----------------------------------
+Regressions
+-----------
+
+- Some programs running 10-20% slower
+- Some programs using 10-20% more memory
+
+# Sources
 
 - Transparent huge-pages not getting allocated
 - GC pacing problems
@@ -155,12 +161,6 @@ What happened to our hugepages?
 - Compact into one big region
 - Carefully align minor heaps
 
-GC Pacing Problems
-------------------
-
-- Lots of programs consuming more memory (20%)
-- Programs using lots of external memory seeing large slowdowns
-
 How does pacing work?
 ---------------------
 
@@ -173,9 +173,8 @@ How does pacing work?
 
 - Constant amount of collection per word promoted.
 - External memory
-  - Mix of design and implementation bugs
-  - Design bugs => mostly more aggressive
-  - Impl bugs   => mostly less aggressive
+  - extra_heap_resources determines when to do an extra cycle
+  - Increment by N/kH on every external alloc
 
 
 <!-- column: 1 -->
@@ -183,8 +182,55 @@ How does pacing work?
 # Runtime 5
 
 - Same pacing approach for ordinary allocations
-- Unified mark & sweep
 - Fixed a bunch of implementation bugs
+
+GC Pacing Results
+-----------------
+
+![](./space_overhead_0.png)
+
+GC Pacing Results (rt4)
+-----------------
+
+![](./space_overhead_1.png)
+
+GC Pacing Results (rt5)
+-----------------
+
+![](./space_overhead_2.png)
+
+What happened?
+--------------
+
+- Ordinary collection is less aggressive
+  - Unified mark & sweep => too much floating garbage (~25%)
+  - Fix with markdelay patch, breaking them back up
+- But excessive collection with bigstrings is better
+  - One bugfix made allocation less aggressive
+  - (But others made it more aggressive)
+
+GC Pacing Results (rt5)
+-----------------
+
+![](./space_overhead_2.png)
+
+GC Pacing Results (rt5-markdelay)
+-----------------
+
+![](./space_overhead_3.png)
+
+Where are we now?
+-----------------
+
+- Ordinary pacing is better (though still not quite right)
+- Excessive collection is worse
+
+What next?
+
+- Tried to fix some of the design bugs
+- e.g., N/kH uses the wrong notion of H
+- But...results were hard to tune and control
+
 
 Open-loop and Closed-loop pacing
 --------------------------------
@@ -211,43 +257,13 @@ graph LR
 Can hit the target precisely, but often oscillates or converges too
 slowly
 
-GC Pacing Results
------------------
+Back to the drawing board!
+--------------------------
 
-![](./space_overhead_0.png)
-
-GC Pacing Results (rt4)
------------------
-
-![](./space_overhead_1.png)
-
-GC Pacing Results (rt5)
------------------
-
-![](./space_overhead_2.png)
-
-Markdelay
-----------------------------------
-
-- Unified mark & sweep => too much floating garbage
-- Up to 25%!
-
-
-GC Pacing Results (rt5)
------------------
-
-![](./space_overhead_2.png)
-
-GC Pacing Results (rt5-markdelay)
------------------
-
-![](./space_overhead_3.png)
-
-Back to the drawing board
--------------------------
-
-Revisiting the core steady-state calculations revealed that external
-memory could be integrated cleanly
+- Rethinking the steady-state analysis, an open-loop solution was
+  found!
+- Constant number of words collected per word allocated
+- But an extra word of sweeping per on-heap byte
 
 GC Pacing Results (rt5-markdelay)
 -----------------
@@ -261,35 +277,27 @@ GC Pacing Results (rt5-open-loop)
 
 Things we learned
 -----------------
-<!-- incremental_lists: false -->
-
 <!-- pause -->
+
 # Benchmarking is hard
 
 - Original testing leaned too much on small programs
-- Different users have different behaviors
+- Different use-cases put different pressures on the design
+- <span style="color:blue">**Takeaway**</span>: More of the initial
+  evaluation should have been real systems.
 
-<!-- pause -->
-## Takeaway
-
-- Spend more time testing real systems!
-
-<!-- pause -->
 # Performance debugging is hard
 
-- The real problems were hard to spot!
+- Problems cover each other
 - Too much time spent implementing full solutions to non-problems
-
-<!-- pause -->
-## Takeaway
-
-- Do more experiments!
+- <span style="color:blue">**Takeaway**</span>: More focused
+  benchmarks and proof-of-concept fixes while iterating on the
+  solutions
 
 Things we learned
 -----------------
 <!-- incremental_lists: false -->
 
-<!-- pause -->
 # Go back to the drawing board, sometimes
 
 - We knew external memory handling was hacky
@@ -300,13 +308,11 @@ Things we learned
 -----------------
 <!-- incremental_lists: false -->
 
-<!-- pause -->
 <!-- column_layout: [3, 2] -->
 
 <!-- column: 0 -->
 # Backwards compatibility is hard
 
-<!-- pause -->
 Every change breaks someone's workflow.
 
 <!-- column: 1 -->
@@ -328,3 +334,5 @@ What's next?
 - New abstractions for efficiently combining parallelism and
   concurrency
 - Teaching people how to use it!
+
+Stay tuned!
