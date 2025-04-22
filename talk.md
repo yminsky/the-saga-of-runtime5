@@ -12,21 +12,17 @@ options:
     - latex
 ---
 
-Goals
------
-
-- Build a modern, high-performance multicore GC for OCaml
-- Single, easy-to-maintain runtime
-- Good parallel speedups
-- That's easy to adopt!
-  - Preserving seuqential performance, pause times, FFI
-
+Let's start with the paper
+--------------------------
 
 <span style="color:green">**Retrofitting Parallelism onto OCaml**</span>, ICFP 2020
 
-<!-- speaker_note: The results are pretty good! -->
+- A modern, high-performance multi-core GC for OCaml
+- Single, easy-to-maintain runtime
+- That's easy to adopt!
+  - Preserving sequential performance, pause times, FFI
 
-Lots of benchmarks!
+Lots of benchmarks and evaluation!
 
 - Performance loss of ~3% for sequential programs
 - Pause times very similar
@@ -35,6 +31,16 @@ Lots of benchmarks!
 
 It did take a while, though...
 -------
+
+<!--
+- 2023-09: OCaml 5.1 released w/prefetching restored
+- 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
+- 2023-12: JS benchmarks find serious performance regressions
+- 2024-05: OCaml 5.2 released w/compaction restored
+- 2025-01: OCaml 5.3 released w/statmemprof restored
+- 2025-05(?): Runtime5 made GA at Jane Street
+-->
+
 
 <!-- incremental_lists: false -->
 <!-- pause -->
@@ -46,27 +52,18 @@ It did take a while, though...
 - 2020: <span style="color:green">"Retrofitting Parallelism onto OCaml"</span> published
 - 2020: Core team commits to upstreaming multicore
 - 2021: <span style="color:green">"Retrofitting Effect Handlers to OCaml"</span> published
-- 2022: OCaml 5.0 released with Multicore GC and Effects
+- 2022: OCaml 5.0 released with multicore GC and effects
 
 <!-- pause -->
 
-9 years! But at least it's done.
-
-Or is it?
-----------
-
-<!--
-- 2023-09: OCaml 5.1 released w/prefetching restored
+- 2023-09: <span style="color:blue">prefetching restored</span> (5.1)
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
-- 2023-12: JS benchmarks find serious performance regressions
-- 2024-05: OCaml 5.2 released w/compaction restored
-- 2025-01: OCaml 5.3 released w/statmemprof restored
-- 2025-05(?): Runtime5 made GA at Jane Street
--->
+- 2023-12: <span style="color: #ff9000">JS benchmarks find serious
+  performance regressions</span>
+- 2024-05: <span style="color:blue">compaction restored</span> (5.2)
+- 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
+- 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
 
-- 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
-- 2023-12: JS benchmarks find serious performance regressions
-- 2025-05(?): Runtime5 made GA at Jane Street
 
 What is OCaml's GC like?
 ------------------
@@ -82,8 +79,7 @@ What is OCaml's GC like?
 - Generational
 - Snapshot-at-the-beginning
 - With a write-barrier
-- Closed-loop pacing via a steady-state analysis
-- Tuned by space-overhead
+- Mostly open-loop pacing
 - Supporting external memory
 
 <!-- column: 1 -->
@@ -99,20 +95,13 @@ What is OCaml's GC like?
   - Stop-the-world sync at cycle end
 - Safe-points
 
-What problems did we encounter?
--------------------
+Where did the regressions come from?
+----------------------------------
 
-- Missing features (prefetching, statmemprof, compaction, ...)
-- 10-20% regressions on GC-intense programs
-- 10% regressions on zero-allocation applications
-
-# What were the causes?
-
-- Transparent huge-pages weren't working
-- Context switching in systhreads were slow
-- GC pacing was off
-  - Due to changes to mark/sweep design
-  - and bad heuristics for external memory
+- Transparent huge-pages not getting allocated
+- GC pacing problems
+- Slow context switching in systhreads
+- Slow stack checks
 
 Transparent Huge Pages
 ----------------------
@@ -197,6 +186,31 @@ How does pacing work?
 - Unified mark & sweep
 - Fixed a bunch of implementation bugs
 
+Open-loop and Closed-loop pacing
+--------------------------------
+
+<!-- pause -->
+# Open-loop
+
+```mermaid +render
+graph LR
+    Obs --> Dec
+```
+
+Predictable, but has a hard time hitting the target
+
+<!-- pause -->
+# Closed-loop
+
+```mermaid +render
+graph LR
+    Obs --> Dec
+    Dec --> Obs
+```
+
+Can hit the target precisely, but often oscillates or converges too
+slowly
+
 GC Pacing Results
 -----------------
 
@@ -229,9 +243,11 @@ GC Pacing Results (rt5-markdelay)
 
 ![](./space_overhead_3.png)
 
-Open-loop pacing
------------------
+Back to the drawing board
+-------------------------
 
+Revisiting the core steady-state calculations revealed that external
+memory could be integrated cleanly
 
 GC Pacing Results (rt5-markdelay)
 -----------------
@@ -243,11 +259,72 @@ GC Pacing Results (rt5-open-loop)
 
 ![](./space_overhead_4.png)
 
-Backwards compatibility is hard
--------------------------------
+Things we learned
+-----------------
+<!-- incremental_lists: false -->
+
+<!-- pause -->
+# Benchmarking is hard
+
+- Original testing leaned too much on small programs
+- Different users have different behaviors
+
+<!-- pause -->
+## Takeaway
+
+- Spend more time testing real systems!
+
+<!-- pause -->
+# Performance debugging is hard
+
+- The real problems were hard to spot!
+- Too much time spent implementing full solutions to non-problems
+
+<!-- pause -->
+## Takeaway
+
+- Do more experiments!
+
+Things we learned
+-----------------
+<!-- incremental_lists: false -->
+
+<!-- pause -->
+# Go back to the drawing board, sometimes
+
+- We knew external memory handling was hacky
+- We tried to fix the issues incrementally
+- But a first-principles approach turned out better
+
+Things we learned
+-----------------
+<!-- incremental_lists: false -->
+
+<!-- pause -->
+<!-- column_layout: [3, 2] -->
+
+<!-- column: 0 -->
+# Backwards compatibility is hard
+
+<!-- pause -->
+Every change breaks someone's workflow.
+
+<!-- column: 1 -->
+![](./workflow.png)
+
+What's next?
+------------
 
 <!-- pause -->
 
-Every change breaks someone's workflow.
+<span style="color:green">**Data Race Freedom à la Mode**</span>, POPL
+2025
 
-![](./workflow.png)
+- Propagating type information through our libraries
+  - And fixing data-races!
+- High-performance data-structures
+- User-level scheduling
+- Profiling and analysis tools
+- New abstractions for efficiently combining parallelism and
+  concurrency
+- Teaching people how to use it!
