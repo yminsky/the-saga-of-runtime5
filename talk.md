@@ -3,13 +3,13 @@ title: The Saga of Multicore OCaml
 author: Yaron Minsky
 date: 2025
 revealjs:
-  theme: black
+  theme: night
   transition: fade
   center: false
   hash: true
-  controls: true
+  controls: false
   progress: true
-  slideNumber: true
+  slideNumber: false
   margin: 0.04
   minScale: 0.2
   maxScale: 2.0

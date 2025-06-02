@@ -10,15 +10,6 @@ talk.html: talk.md
 		--to revealjs \
 		--slide-level=1 \
 		--variable revealjs-url=https://unpkg.com/reveal.js@4.6.1 \
-		--variable theme=black \
-		--variable transition=fade \
-		--variable center=false \
-		--variable hash=true \
-		--variable controls=true \
-		--variable progress=true \
-		--variable slideNumber=true \
-		--variable width=1280 \
-		--variable height=720 \
 		--output talk.html \
 		talk.md
 
