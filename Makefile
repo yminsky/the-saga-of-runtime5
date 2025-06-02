@@ -12,7 +12,7 @@ talk.html: talk.md
 		--variable revealjs-url=https://unpkg.com/reveal.js@4.6.1 \
 		--variable theme=black \
 		--variable transition=fade \
-		--variable center=true \
+		--variable center=false \
 		--variable hash=true \
 		--variable controls=true \
 		--variable progress=true \

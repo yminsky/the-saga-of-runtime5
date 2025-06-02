@@ -21,14 +21,10 @@
   text-transform: none !important;
 }
 
-/* Move slides to top */
-.reveal .slides {
-  top: 0 !important;
-}
-
-.reveal .slides > section {
-  top: 0 !important;
-  padding-top: 1em !important;
+/* Reduce top margin on titles to save space */
+.reveal h1 {
+  margin-top: 0.2em !important;
+  margin-bottom: 0.4em !important;
 }
 
 /* Ensure transitions are subtle */
