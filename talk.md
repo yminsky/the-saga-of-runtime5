@@ -6,7 +6,6 @@ revealjs:
   theme: night
   transition: fade
   center: false
-  revealjs-url: revealjs-url=https://unpkg.com/reveal.js@5.2.1
 incremental: false
 ---
 

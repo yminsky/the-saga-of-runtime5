@@ -8,6 +8,7 @@ talk.html: talk.md
 	pandoc -t revealjs -s \
 		--from markdown \
 		--to revealjs \
+		--variable revealjs-url=https://unpkg.com/reveal.js@5.2.1 \
 		--output talk.html \
 		talk.md
 
