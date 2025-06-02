@@ -9,7 +9,7 @@ talk.html: talk.md
 		--from markdown \
 		--to revealjs \
 		--slide-level=1 \
-		--variable revealjs-url=https://unpkg.com/reveal.js@4.6.1 \
+		--variable revealjs-url=https://unpkg.com/reveal.js@5.2.1 \
 		--output talk.html \
 		talk.md
 
