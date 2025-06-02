@@ -1,0 +1,29 @@
+/* Custom styles for the presentation */
+
+/* Make titles normal case and smaller */
+.reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+  text-transform: none !important;
+  font-size: 1.8em !important;
+  line-height: 1.2 !important;
+}
+
+/* Title slide styling */
+.reveal .title {
+  font-size: 2.2em !important;
+  text-transform: none !important;
+}
+
+/* Subtitle and author styling */
+.reveal .subtitle, .reveal .author, .reveal .date {
+  font-size: 1.2em !important;
+  text-transform: none !important;
+}
+
+/* Ensure transitions are subtle */
+.reveal .slides section .fragment {
+  opacity: 0.3;
+}
+
+.reveal .slides section .fragment.visible {
+  opacity: 1;
+}

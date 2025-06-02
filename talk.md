@@ -50,8 +50,7 @@ Lots of benchmarks and evaluation!
 - 2022: OCaml 5.0 released with multicore GC and effects
 :::
 
-## {.incremental}
-
+::: {.incremental}
 - 2023-09: <span style="color:blue">prefetching restored</span> (5.1)
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
 - 2023-12: <span style="color: #ff9000">JS benchmarks find serious
@@ -59,6 +58,7 @@ Lots of benchmarks and evaluation!
 - 2024-05: <span style="color:blue">compaction restored</span> (5.2)
 - 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
 - 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
+:::
 
 # What is OCaml's GC like?
 

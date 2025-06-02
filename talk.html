@@ -32,6 +32,7 @@
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="https://unpkg.com/reveal.js@4.6.1/dist/theme/black.css" id="theme">
+  <link rel="stylesheet" href="custom.css"/>
 </head>
 <body>
   <div class="reveal">
@@ -89,20 +90,22 @@ Effect Handlers to OCaml”</span> published</li>
 effects</li>
 </ul>
 </div>
-<h2 class="incremental" id="section"></h2>
+<div>
 <ul>
-<li>2023-09: <span style="color:blue">prefetching restored</span>
-(5.1)</li>
-<li>2023-11: OCaml 5.1 merged to JS branch, w/both runtimes</li>
-<li>2023-12: <span style="color: #ff9000">JS benchmarks find serious
-performance regressions</span></li>
-<li>2024-05: <span style="color:blue">compaction restored</span>
-(5.2)</li>
-<li>2025-01: <span style="color:blue">statmemprof restored</span>
-(5.3)</li>
-<li>2025-05: <span style="color: #ff9000">Regressions fixed</span>,
-multicore is GA at JS</li>
+<li class="fragment">2023-09: <span style="color:blue">prefetching
+restored</span> (5.1)</li>
+<li class="fragment">2023-11: OCaml 5.1 merged to JS branch, w/both
+runtimes</li>
+<li class="fragment">2023-12: <span style="color: #ff9000">JS benchmarks
+find serious performance regressions</span></li>
+<li class="fragment">2024-05: <span style="color:blue">compaction
+restored</span> (5.2)</li>
+<li class="fragment">2025-01: <span style="color:blue">statmemprof
+restored</span> (5.3)</li>
+<li class="fragment">2025-05: <span style="color: #ff9000">Regressions
+fixed</span>, multicore is GA at JS</li>
 </ul>
+</div>
 </section>
 <section id="what-is-ocamls-gc-like" class="slide level1">
 <h1>What is OCaml’s GC like?</h1>
@@ -491,7 +494,7 @@ concurrency</li>
         previewLinks: false,
 
         // Transition style (none/fade/slide/convex/concave/zoom)
-        transition: 'slide',
+        transition: 'fade',
 
         // Transition speed (default/fast/slow)
         transitionSpeed: 'default',
