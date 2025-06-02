@@ -6,9 +6,10 @@ theme: night
 transition: fade
 center: false
 incremental: false
-width: 1280
-height: 720
+width: 500
+height: 300
 margin: 0.04
+smaller: true
 ---
 
 # Let's start with the paper
@@ -45,9 +46,6 @@ Lots of benchmarks and evaluation!
 - 2020: Core team commits to upstreaming multicore
 - 2021: <span style="color:green">"Retrofitting Effect Handlers to OCaml"</span> published
 - 2022: OCaml 5.0 released with multicore GC and effects
-
-. . .
-
 - 2023-09: <span style="color:blue">prefetching restored</span> (5.1)
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
 - 2023-12: <span style="color: #ff9000">JS benchmarks find serious
