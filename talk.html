@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Yaron Minsky">
+  <meta name="dcterms.date" content="2025-01-01">
+  <title>The Saga of Multicore OCaml</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@4.3.1/dist/reset.css">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@4.3.1/dist/reveal.css">
+  <style>
+    .reveal .sourceCode {  /* see #7635 */
+      overflow: visible;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@4.3.1/dist/theme/dark.css" id="theme">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">The Saga of Multicore OCaml</h1>
+  <p class="author">Yaron Minsky</p>
+  <p class="date">2025</p>
+</section>
+
+<section id="lets-start-with-the-paper" class="slide level1">
+<h1>Let’s start with the paper</h1>
+<p><span style="color:green"><strong>Retrofitting Parallelism onto
+OCaml</strong></span>, ICFP 2020</p>
+<ul>
+<li>A modern, high-performance multi-core GC for OCaml</li>
+<li>Easy to maintain, easy to adopt.
+<ul>
+<li>One runtime for parallel and sequential</li>
+<li>Preserving sequential performance, pause times, FFI</li>
+</ul></li>
+</ul>
+<p>Lots of benchmarks and evaluation!</p>
+<ul>
+<li>Runtime loss of ~3% for sequential programs</li>
+<li>Memory used is similar</li>
+<li>Pause times very similar</li>
+<li>Good speedups</li>
+</ul>
+</section>
+<section id="it-did-take-a-while-though" class="slide level1">
+<h1>It did take a while, though…</h1>
+<!--
+- 2023-09: OCaml 5.1 released w/prefetching restored
+- 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
+- 2023-12: JS benchmarks find serious performance regressions
+- 2024-05: OCaml 5.2 released w/compaction restored
+- 2025-01: OCaml 5.3 released w/statmemprof restored
+- 2025-05(?): Runtime5 made GA at Jane Street
+-->
+<div>
+<ul>
+<li class="fragment">2013: OCaml Multicore project born</li>
+<li class="fragment">2015: <span style="color:green">“Effect Handlers
+for OCaml”</span> presented at OCaml Workshop</li>
+<li class="fragment">2019: Sandmark benchmark suite created</li>
+<li class="fragment">2020: <span style="color:green">“Retrofitting
+Parallelism onto OCaml”</span> published</li>
+<li class="fragment">2020: Core team commits to upstreaming
+multicore</li>
+<li class="fragment">2021: <span style="color:green">“Retrofitting
+Effect Handlers to OCaml”</span> published</li>
+<li class="fragment">2022: OCaml 5.0 released with multicore GC and
+effects</li>
+</ul>
+</div>
+<h2 class="incremental" id="section"></h2>
+<ul>
+<li>2023-09: <span style="color:blue">prefetching restored</span>
+(5.1)</li>
+<li>2023-11: OCaml 5.1 merged to JS branch, w/both runtimes</li>
+<li>2023-12: <span style="color: #ff9000">JS benchmarks find serious
+performance regressions</span></li>
+<li>2024-05: <span style="color:blue">compaction restored</span>
+(5.2)</li>
+<li>2025-01: <span style="color:blue">statmemprof restored</span>
+(5.3)</li>
+<li>2025-05: <span style="color: #ff9000">Regressions fixed</span>,
+multicore is GA at JS</li>
+</ul>
+</section>
+<section id="what-is-ocamls-gc-like" class="slide level1">
+<h1>What is OCaml’s GC like?</h1>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h2 id="runtime-4">Runtime 4</h2>
+<ul>
+<li>Sequential</li>
+<li>Generational</li>
+<li>With a write-barrier</li>
+<li>Mark &amp; Sweep</li>
+<li>Incremental</li>
+<li>Snapshot-at-the-beginning</li>
+<li>Mostly open-loop pacing</li>
+<li>Supporting external memory</li>
+</ul>
+</div><div class="column" style="width:50%;">
+<h2 id="runtime-5">Runtime 5</h2>
+<ul>
+<li><del>Sequential</del> Parallel</li>
+<li>Minor heap
+<ul>
+<li>One minor heap per domain</li>
+<li>stop-the-world collection</li>
+</ul></li>
+<li>Major heap
+<ul>
+<li>Shared heap</li>
+<li>Merged mark/sweep design</li>
+<li>Stop-the-world sync at cycle end</li>
+</ul></li>
+<li>Safe-points</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="regressions" class="slide level1">
+<h1>Regressions</h1>
+<ul>
+<li>Some programs running 10-20% slower</li>
+<li>Some programs using 10-20% more memory</li>
+</ul>
+<h2 id="sources">Sources</h2>
+<ul>
+<li>Transparent huge-pages not getting allocated</li>
+<li>GC pacing problems</li>
+<li>Slow context switching in systhreads</li>
+<li>Slow stack checks</li>
+</ul>
+</section>
+<section id="transparent-huge-pages" class="slide level1">
+<h1>Transparent Huge Pages</h1>
+<h2 id="background">Background</h2>
+<ul>
+<li>Traditional pages are 4kb, “Huge” pages are 2Mb (or 1GB)</li>
+<li>Huge savings in TLB pressure</li>
+<li><strong>Transparent</strong> huge pages is when the OS does it for
+you, implicitly</li>
+</ul>
+<h2 id="what-happened">What happened?</h2>
+<ul>
+<li>Worked in 4.14, failed under 5.0</li>
+<li>Serious effect, 3x slowdown in pathological benchmark</li>
+</ul>
+</section>
+<section id="what-happened-to-our-hugepages" class="slide level1">
+<h1>What happened to our hugepages?</h1>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h2 id="runtime-4-1">Runtime 4</h2>
+<ul>
+<li>Grow in big chunks</li>
+<li>Compaction into one big space</li>
+<li>No clever virtual-memory games</li>
+</ul>
+</div><div class="column" style="width:50%;">
+<h2 id="runtime-5-1">Runtime 5</h2>
+<ul>
+<li>Grows in small increments</li>
+<li>Compaction into 32k chunks</li>
+<li>Guard pages to break up the minor heap</li>
+</ul>
+</div>
+</div>
+<h2 id="solution">Solution</h2>
+<ul>
+<li>Grow heap in big chunks instead</li>
+<li>Compact into one big region</li>
+<li>Carefully align minor heaps</li>
+</ul>
+</section>
+<section id="how-does-pacing-work" class="slide level1">
+<h1>How does pacing work?</h1>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h2 id="runtime-4-2">Runtime 4</h2>
+<ul>
+<li>Constant amount of collection per word promoted.</li>
+<li>External memory
+<ul>
+<li>extra_heap_resources determines when to do an extra cycle</li>
+<li>Increment by N/kH on every external alloc</li>
+</ul></li>
+</ul>
+</div><div class="column" style="width:50%;">
+<h2 id="runtime-5-2">Runtime 5</h2>
+<ul>
+<li>Same pacing approach for ordinary allocations</li>
+<li>Fixed a bunch of implementation bugs</li>
+</ul>
+</div>
+</div>
+</section>
+<section id="gc-pacing-results" class="slide level1">
+<h1>GC Pacing Results</h1>
+<p><img data-src="./space_overhead_0.png" /></p>
+</section>
+<section id="gc-pacing-results-rt4" class="slide level1">
+<h1>GC Pacing Results (rt4)</h1>
+<p><img data-src="./space_overhead_1.png" /></p>
+</section>
+<section id="gc-pacing-results-rt5" class="slide level1">
+<h1>GC Pacing Results (rt5)</h1>
+<p><img data-src="./space_overhead_2.png" /></p>
+</section>
+<section id="what-happened-1" class="slide level1">
+<h1>What happened?</h1>
+<ul>
+<li>Ordinary collection is less aggressive
+<ul>
+<li>Unified mark &amp; sweep =&gt; too much floating garbage (~25%)</li>
+<li>Fix with markdelay patch, breaking them back up</li>
+</ul></li>
+<li>But excessive collection with bigstrings is better
+<ul>
+<li>One bugfix made allocation less aggressive</li>
+<li>(But others made it more aggressive)</li>
+</ul></li>
+</ul>
+</section>
+<section id="gc-pacing-results-rt5-1" class="slide level1">
+<h1>GC Pacing Results (rt5)</h1>
+<p><img data-src="./space_overhead_2.png" /></p>
+</section>
+<section id="gc-pacing-results-rt5-markdelay" class="slide level1">
+<h1>GC Pacing Results (rt5-markdelay)</h1>
+<p><img data-src="./space_overhead_3.png" /></p>
+</section>
+<section id="where-are-we-now" class="slide level1">
+<h1>Where are we now?</h1>
+<ul>
+<li>Ordinary pacing is better (though still not quite right)</li>
+<li>Excessive collection is worse</li>
+</ul>
+<p>What next?</p>
+<ul>
+<li>Tried to fix some of the design bugs</li>
+<li>e.g., N/kH uses the wrong notion of H</li>
+<li>But…results were hard to tune and control</li>
+</ul>
+</section>
+<section id="open-loop-and-closed-loop-pacing" class="slide level1">
+<h1>Open-loop and Closed-loop pacing</h1>
+<h2 id="open-loop">Open-loop</h2>
+<pre class="mermaid"><code>graph LR
+    Obs --&gt; Dec</code></pre>
+<p>Predictable, but has a hard time hitting the target</p>
+<h2 id="closed-loop">Closed-loop</h2>
+<pre class="mermaid"><code>graph LR
+    Obs --&gt; Dec
+    Dec --&gt; Obs</code></pre>
+<p>Can hit the target precisely, but often oscillates or converges too
+slowly</p>
+</section>
+<section id="back-to-the-drawing-board" class="slide level1">
+<h1>Back to the drawing board!</h1>
+<ul>
+<li>Rethinking the steady-state analysis, an open-loop solution was
+found!</li>
+<li>Constant number of words collected per word allocated</li>
+<li>But an extra word of sweeping per on-heap byte</li>
+</ul>
+</section>
+<section id="gc-pacing-results-rt5-markdelay-1" class="slide level1">
+<h1>GC Pacing Results (rt5-markdelay)</h1>
+<p><img data-src="./space_overhead_3.png" /></p>
+</section>
+<section id="gc-pacing-results-rt5-open-loop" class="slide level1">
+<h1>GC Pacing Results (rt5-open-loop)</h1>
+<p><img data-src="./space_overhead_4.png" /></p>
+</section>
+<section id="things-we-learned" class="slide level1">
+<h1>Things we learned</h1>
+<h2 id="benchmarking-is-hard">Benchmarking is hard</h2>
+<ul>
+<li>Original testing leaned too much on small programs</li>
+<li>Different use-cases put different pressures on the design</li>
+<li><span style="color:blue"><strong>Takeaway</strong></span>: More of
+the initial evaluation should have been real systems.</li>
+</ul>
+<h2 id="performance-debugging-is-hard">Performance debugging is
+hard</h2>
+<ul>
+<li>Problems cover each other</li>
+<li>Too much time spent implementing full solutions to non-problems</li>
+<li><span style="color:blue"><strong>Takeaway</strong></span>: More
+focused benchmarks and proof-of-concept fixes while iterating on the
+solutions</li>
+</ul>
+</section>
+<section id="things-we-learned-1" class="slide level1">
+<h1>Things we learned</h1>
+<h2 id="go-back-to-the-drawing-board-sometimes">Go back to the drawing
+board, sometimes</h2>
+<ul>
+<li>We knew external memory handling was hacky</li>
+<li>We tried to fix the issues incrementally</li>
+<li>But a first-principles approach turned out better</li>
+</ul>
+</section>
+<section id="things-we-learned-2" class="slide level1">
+<h1>Things we learned</h1>
+<div class="columns">
+<div class="column" style="width:60%;">
+<h2 id="backwards-compatibility-is-hard">Backwards compatibility is
+hard</h2>
+<p>Every change breaks someone’s workflow.</p>
+</div><div class="column" style="width:40%;">
+<p><img data-src="./workflow.png" /></p>
+</div>
+</div>
+</section>
+<section id="whats-next" class="slide level1">
+<h1>What’s next?</h1>
+<p><span style="color:green"><strong>Data Race Freedom à la
+Mode</strong></span>, POPL 2025</p>
+<ul>
+<li>Propagating type information through our libraries
+<ul>
+<li>And fixing data-races!</li>
+</ul></li>
+<li>High-performance data-structures</li>
+<li>User-level scheduling</li>
+<li>Profiling and analysis tools</li>
+<li>New abstractions for efficiently combining parallelism and
+concurrency</li>
+<li>Teaching people how to use it!</li>
+</ul>
+<p>Stay tuned!</p>
+</section>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/reveal.js@4.3.1/dist/reveal.js"></script>
+
+  <!-- reveal.js plugins -->
+  <script src="https://unpkg.com/reveal.js@4.3.1/plugin/notes/notes.js"></script>
+  <script src="https://unpkg.com/reveal.js@4.3.1/plugin/search/search.js"></script>
+  <script src="https://unpkg.com/reveal.js@4.3.1/plugin/zoom/zoom.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: true,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'bottom-right',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: true,
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: false,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: true,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'default',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: true,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'slide',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'fade',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 720,
+
+        // reveal.js plugins
+        plugins: [
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    </body>
+</html>
