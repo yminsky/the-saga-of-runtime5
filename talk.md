@@ -6,6 +6,9 @@ theme: night
 transition: fade
 center: false
 incremental: false
+width: 1280
+height: 720
+margin: 0.04
 ---
 
 # Let's start with the paper
