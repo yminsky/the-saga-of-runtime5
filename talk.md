@@ -24,7 +24,9 @@ incremental: false
   - Preserving sequential performance, pause times, FFI
 :::
 
+::: {.fragment}
 Lots of benchmarks and evaluation!
+:::
 
 ::: {.incremental}
 - Runtime loss of ~3% for sequential programs
