@@ -9,6 +9,9 @@ talk.html: talk.md
 		--from markdown \
 		--to revealjs \
 		--variable revealjs-url=https://unpkg.com/reveal.js@5.2.1 \
+		--variable width=1280 \
+		--variable height=720 \
+		--variable margin=0.04 \
 		--output talk.html \
 		talk.md
 
