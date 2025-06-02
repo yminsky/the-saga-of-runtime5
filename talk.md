@@ -65,7 +65,9 @@ Lots of benchmarks and evaluation!
 ::: {.columns}
 
 ::: {.column width="50%"}
+::: {.fragment}
 ## Runtime 4
+:::
 
 ::: {.incremental}
 - Sequential
@@ -80,7 +82,9 @@ Lots of benchmarks and evaluation!
 :::
 
 ::: {.column width="50%"}
+::: {.fragment}
 ## Runtime 5
+:::
 
 ::: {.incremental}
 - ~~Sequential~~ Parallel
