@@ -6,8 +6,8 @@ theme: night
 transition: fade
 center: false
 incremental: false
-width: 500
-height: 300
+width: 2000
+height: 1000
 margin: 0.04
 smaller: true
 ---
