@@ -10,6 +10,7 @@ revealjs:
   controls: true
   progress: true
   slideNumber: true
+incremental: true
 ---
 
 # Let's start with the paper
@@ -39,7 +40,6 @@ Lots of benchmarks and evaluation!
 - 2025-05(?): Runtime5 made GA at Jane Street
 -->
 
-::: {.incremental}
 - 2013: OCaml Multicore project born
 - 2015: <span style="color:green">"Effect Handlers for OCaml"</span>
   presented at OCaml Workshop
@@ -48,9 +48,9 @@ Lots of benchmarks and evaluation!
 - 2020: Core team commits to upstreaming multicore
 - 2021: <span style="color:green">"Retrofitting Effect Handlers to OCaml"</span> published
 - 2022: OCaml 5.0 released with multicore GC and effects
-:::
 
-::: {.incremental}
+. . .
+
 - 2023-09: <span style="color:blue">prefetching restored</span> (5.1)
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
 - 2023-12: <span style="color: #ff9000">JS benchmarks find serious
@@ -58,7 +58,6 @@ Lots of benchmarks and evaluation!
 - 2024-05: <span style="color:blue">compaction restored</span> (5.2)
 - 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
 - 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
-:::
 
 # What is OCaml's GC like?
 
@@ -109,10 +108,12 @@ Lots of benchmarks and evaluation!
 
 ## Background
 
+::: {.nonincremental}
 - Traditional pages are 4kb, "Huge" pages are 2Mb (or 1GB)
 - Huge savings in TLB pressure
 - **Transparent** huge pages is when the OS does it for you,
   implicitly
+:::
 
 ## What happened?
 
@@ -267,9 +268,11 @@ slowly
 
 ## Go back to the drawing board, sometimes
 
+::: {.nonincremental}
 - We knew external memory handling was hacky
 - We tried to fix the issues incrementally
 - But a first-principles approach turned out better
+:::
 
 # Things we learned
 

@@ -74,36 +74,31 @@ OCaml</strong></span>, ICFP 2020</p>
 - 2025-01: OCaml 5.3 released w/statmemprof restored
 - 2025-05(?): Runtime5 made GA at Jane Street
 -->
-<div>
 <ul>
-<li class="fragment">2013: OCaml Multicore project born</li>
-<li class="fragment">2015: <span style="color:green">“Effect Handlers
-for OCaml”</span> presented at OCaml Workshop</li>
-<li class="fragment">2019: Sandmark benchmark suite created</li>
-<li class="fragment">2020: <span style="color:green">“Retrofitting
-Parallelism onto OCaml”</span> published</li>
-<li class="fragment">2020: Core team commits to upstreaming
-multicore</li>
-<li class="fragment">2021: <span style="color:green">“Retrofitting
-Effect Handlers to OCaml”</span> published</li>
-<li class="fragment">2022: OCaml 5.0 released with multicore GC and
-effects</li>
+<li>2013: OCaml Multicore project born</li>
+<li>2015: <span style="color:green">“Effect Handlers for OCaml”</span>
+presented at OCaml Workshop</li>
+<li>2019: Sandmark benchmark suite created</li>
+<li>2020: <span style="color:green">“Retrofitting Parallelism onto
+OCaml”</span> published</li>
+<li>2020: Core team commits to upstreaming multicore</li>
+<li>2021: <span style="color:green">“Retrofitting Effect Handlers to
+OCaml”</span> published</li>
+<li>2022: OCaml 5.0 released with multicore GC and effects</li>
 </ul>
-</div>
-<div>
+<div class="fragment">
 <ul>
-<li class="fragment">2023-09: <span style="color:blue">prefetching
-restored</span> (5.1)</li>
-<li class="fragment">2023-11: OCaml 5.1 merged to JS branch, w/both
-runtimes</li>
-<li class="fragment">2023-12: <span style="color: #ff9000">JS benchmarks
-find serious performance regressions</span></li>
-<li class="fragment">2024-05: <span style="color:blue">compaction
-restored</span> (5.2)</li>
-<li class="fragment">2025-01: <span style="color:blue">statmemprof
-restored</span> (5.3)</li>
-<li class="fragment">2025-05: <span style="color: #ff9000">Regressions
-fixed</span>, multicore is GA at JS</li>
+<li>2023-09: <span style="color:blue">prefetching restored</span>
+(5.1)</li>
+<li>2023-11: OCaml 5.1 merged to JS branch, w/both runtimes</li>
+<li>2023-12: <span style="color: #ff9000">JS benchmarks find serious
+performance regressions</span></li>
+<li>2024-05: <span style="color:blue">compaction restored</span>
+(5.2)</li>
+<li>2025-01: <span style="color:blue">statmemprof restored</span>
+(5.3)</li>
+<li>2025-05: <span style="color: #ff9000">Regressions fixed</span>,
+multicore is GA at JS</li>
 </ul>
 </div>
 </section>
@@ -159,12 +154,14 @@ fixed</span>, multicore is GA at JS</li>
 <section id="transparent-huge-pages" class="slide level1">
 <h1>Transparent Huge Pages</h1>
 <h2 id="background">Background</h2>
+<div>
 <ul>
 <li>Traditional pages are 4kb, “Huge” pages are 2Mb (or 1GB)</li>
 <li>Huge savings in TLB pressure</li>
 <li><strong>Transparent</strong> huge pages is when the OS does it for
 you, implicitly</li>
 </ul>
+</div>
 <h2 id="what-happened">What happened?</h2>
 <ul>
 <li>Worked in 4.14, failed under 5.0</li>
@@ -320,11 +317,13 @@ solutions</li>
 <h1>Things we learned</h1>
 <h2 id="go-back-to-the-drawing-board-sometimes">Go back to the drawing
 board, sometimes</h2>
+<div>
 <ul>
 <li>We knew external memory handling was hacky</li>
 <li>We tried to fix the issues incrementally</li>
 <li>But a first-principles approach turned out better</li>
 </ul>
+</div>
 </section>
 <section id="things-we-learned-2" class="slide level1">
 <h1>Things we learned</h1>
