@@ -19,7 +19,6 @@ talk.html: talk.md
 		--variable slideNumber=true \
 		--variable width=1280 \
 		--variable height=720 \
-		--css=custom.css \
 		--output talk.html \
 		talk.md
 
