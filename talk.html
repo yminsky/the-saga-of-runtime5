@@ -48,24 +48,31 @@
 <h1>Let’s start with the paper</h1>
 <p><span style="color:green"><strong>Retrofitting Parallelism onto
 OCaml</strong></span>, ICFP 2020</p>
+<div>
 <ul>
-<li>A modern, high-performance multi-core GC for OCaml</li>
-<li>Easy to maintain, easy to adopt.
+<li class="fragment">A modern, high-performance multi-core GC for
+OCaml</li>
+<li class="fragment">Easy to maintain, easy to adopt.
 <ul>
-<li>One runtime for parallel and sequential</li>
-<li>Preserving sequential performance, pause times, FFI</li>
+<li class="fragment">One runtime for parallel and sequential</li>
+<li class="fragment">Preserving sequential performance, pause times,
+FFI</li>
 </ul></li>
 </ul>
+</div>
 <p>Lots of benchmarks and evaluation!</p>
+<div>
 <ul>
-<li>Runtime loss of ~3% for sequential programs</li>
-<li>Memory used is similar</li>
-<li>Pause times very similar</li>
-<li>Good speedups</li>
+<li class="fragment">Runtime loss of ~3% for sequential programs</li>
+<li class="fragment">Memory used is similar</li>
+<li class="fragment">Pause times very similar</li>
+<li class="fragment">Good speedups</li>
 </ul>
+</div>
 </section>
 <section id="it-did-take-a-while-though" class="slide level1">
 <h1>It did take a while, though…</h1>
+<div class="fragment">
 <!--
 - 2023-09: OCaml 5.1 released w/prefetching restored
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
@@ -74,7 +81,6 @@ OCaml</strong></span>, ICFP 2020</p>
 - 2025-01: OCaml 5.3 released w/statmemprof restored
 - 2025-05(?): Runtime5 made GA at Jane Street
 -->
-<div>
 <ul>
 <li>2013: OCaml Multicore project born</li>
 <li>2015: <span style="color:green">“Effect Handlers for OCaml”</span>
@@ -89,7 +95,6 @@ OCaml”</span> published</li>
 </ul>
 </div>
 <div class="fragment">
-<div>
 <ul>
 <li>2023-09: <span style="color:blue">prefetching restored</span>
 (5.1)</li>
@@ -104,56 +109,65 @@ performance regressions</span></li>
 multicore is GA at JS</li>
 </ul>
 </div>
-</div>
 </section>
 <section id="what-is-ocamls-gc-like" class="slide level1">
 <h1>What is OCaml’s GC like?</h1>
+<div class="fragment">
 <div class="columns">
 <div class="column" style="width:50%;">
 <h2 id="runtime-4">Runtime 4</h2>
+<div>
 <ul>
-<li>Sequential</li>
-<li>Generational</li>
-<li>With a write-barrier</li>
-<li>Mark &amp; Sweep</li>
-<li>Incremental</li>
-<li>Snapshot-at-the-beginning</li>
-<li>Mostly open-loop pacing</li>
-<li>Supporting external memory</li>
+<li class="fragment">Sequential</li>
+<li class="fragment">Generational</li>
+<li class="fragment">With a write-barrier</li>
+<li class="fragment">Mark &amp; Sweep</li>
+<li class="fragment">Incremental</li>
+<li class="fragment">Snapshot-at-the-beginning</li>
+<li class="fragment">Mostly open-loop pacing</li>
+<li class="fragment">Supporting external memory</li>
 </ul>
+</div>
 </div><div class="column" style="width:50%;">
 <h2 id="runtime-5">Runtime 5</h2>
+<div>
 <ul>
-<li><del>Sequential</del> Parallel</li>
-<li>Minor heap
+<li class="fragment"><del>Sequential</del> Parallel</li>
+<li class="fragment">Minor heap
 <ul>
-<li>One minor heap per domain</li>
-<li>stop-the-world collection</li>
+<li class="fragment">One minor heap per domain</li>
+<li class="fragment">stop-the-world collection</li>
 </ul></li>
-<li>Major heap
+<li class="fragment">Major heap
 <ul>
-<li>Shared heap</li>
-<li>Merged mark/sweep design</li>
-<li>Stop-the-world sync at cycle end</li>
+<li class="fragment">Shared heap</li>
+<li class="fragment">Merged mark/sweep design</li>
+<li class="fragment">Stop-the-world sync at cycle end</li>
 </ul></li>
-<li>Safe-points</li>
+<li class="fragment">Safe-points</li>
 </ul>
+</div>
+</div>
 </div>
 </div>
 </section>
 <section id="regressions" class="slide level1">
 <h1>Regressions</h1>
+<div>
 <ul>
-<li>Some programs running 10-20% slower</li>
-<li>Some programs using 10-20% more memory</li>
+<li class="fragment">Some programs running 10-20% slower</li>
+<li class="fragment">Some programs using 10-20% more memory</li>
 </ul>
+</div>
 <h2 id="sources">Sources</h2>
+<div>
 <ul>
-<li>Transparent huge-pages not getting allocated</li>
-<li>GC pacing problems</li>
-<li>Slow context switching in systhreads</li>
-<li>Slow stack checks</li>
+<li class="fragment">Transparent huge-pages not getting allocated</li>
+<li class="fragment">GC pacing problems</li>
+<li class="fragment">Slow context switching in systhreads</li>
+<li class="fragment">Slow stack checks</li>
 </ul>
+</div>
 </section>
 <section id="transparent-huge-pages" class="slide level1">
 <h1>Transparent Huge Pages</h1>

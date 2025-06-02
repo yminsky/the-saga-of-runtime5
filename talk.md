@@ -10,26 +10,32 @@ revealjs:
   controls: true
   progress: true
   slideNumber: true
-incremental: true
+incremental: false
 ---
 
 # Let's start with the paper
 
 <span style="color:green">**Retrofitting Parallelism onto OCaml**</span>, ICFP 2020
 
+::: {.incremental}
 - A modern, high-performance multi-core GC for OCaml
 - Easy to maintain, easy to adopt.
   - One runtime for parallel and sequential
   - Preserving sequential performance, pause times, FFI
+:::
 
 Lots of benchmarks and evaluation!
 
+::: {.incremental}
 - Runtime loss of ~3% for sequential programs
 - Memory used is similar
 - Pause times very similar
 - Good speedups
+:::
 
 # It did take a while, though...
+
+. . .
 
 <!--
 - 2023-09: OCaml 5.1 released w/prefetching restored
@@ -40,7 +46,6 @@ Lots of benchmarks and evaluation!
 - 2025-05(?): Runtime5 made GA at Jane Street
 -->
 
-::: {.nonincremental}
 - 2013: OCaml Multicore project born
 - 2015: <span style="color:green">"Effect Handlers for OCaml"</span>
   presented at OCaml Workshop
@@ -49,11 +54,9 @@ Lots of benchmarks and evaluation!
 - 2020: Core team commits to upstreaming multicore
 - 2021: <span style="color:green">"Retrofitting Effect Handlers to OCaml"</span> published
 - 2022: OCaml 5.0 released with multicore GC and effects
-:::
 
 . . .
 
-::: {.nonincremental}
 - 2023-09: <span style="color:blue">prefetching restored</span> (5.1)
 - 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
 - 2023-12: <span style="color: #ff9000">JS benchmarks find serious
@@ -61,15 +64,17 @@ Lots of benchmarks and evaluation!
 - 2024-05: <span style="color:blue">compaction restored</span> (5.2)
 - 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
 - 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
-:::
 
 # What is OCaml's GC like?
+
+. . .
 
 ::: {.columns}
 
 ::: {.column width="50%"}
 ## Runtime 4
 
+::: {.incremental}
 - Sequential
 - Generational
 - With a write-barrier
@@ -79,10 +84,12 @@ Lots of benchmarks and evaluation!
 - Mostly open-loop pacing
 - Supporting external memory
 :::
+:::
 
 ::: {.column width="50%"}
 ## Runtime 5
 
+::: {.incremental}
 - ~~Sequential~~ Parallel
 - Minor heap
   - One minor heap per domain
@@ -93,20 +100,25 @@ Lots of benchmarks and evaluation!
   - Stop-the-world sync at cycle end
 - Safe-points
 :::
+:::
 
 :::
 
 # Regressions
 
+::: {.incremental}
 - Some programs running 10-20% slower
 - Some programs using 10-20% more memory
+:::
 
 ## Sources
 
+::: {.incremental}
 - Transparent huge-pages not getting allocated
 - GC pacing problems
 - Slow context switching in systhreads
 - Slow stack checks
+:::
 
 # Transparent Huge Pages
 
