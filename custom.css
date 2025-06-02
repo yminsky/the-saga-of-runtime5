@@ -5,6 +5,8 @@
   text-transform: none !important;
   font-size: 1.8em !important;
   line-height: 1.2 !important;
+  margin-top: 0.3em !important;
+  margin-bottom: 0.5em !important;
 }
 
 /* Title slide styling */
@@ -19,6 +21,16 @@
   text-transform: none !important;
 }
 
+/* Move slides to top */
+.reveal .slides {
+  top: 0 !important;
+}
+
+.reveal .slides > section {
+  top: 0 !important;
+  padding-top: 1em !important;
+}
+
 /* Ensure transitions are subtle */
 .reveal .slides section .fragment {
   opacity: 0.3;
@@ -26,4 +38,15 @@
 
 .reveal .slides section .fragment.visible {
   opacity: 1;
+}
+
+/* Fix fragment list indentation */
+.reveal .slides section .fragment ul {
+  margin-left: 0 !important;
+  padding-left: 1em !important;
+}
+
+.reveal .slides section div > ul {
+  margin-left: 0 !important;
+  padding-left: 1em !important;
 }
