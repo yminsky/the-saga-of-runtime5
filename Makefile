@@ -9,8 +9,8 @@ talk.html: talk.md
 		--from markdown \
 		--to revealjs \
 		--slide-level=1 \
-		--variable revealjs-url=https://unpkg.com/reveal.js@4.3.1 \
-		--variable theme=dark \
+		--variable revealjs-url=https://unpkg.com/reveal.js@4.6.1 \
+		--variable theme=black \
 		--variable transition=slide \
 		--variable center=true \
 		--variable hash=true \
