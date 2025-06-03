@@ -10,8 +10,6 @@ from OCaml Runtime 4 to Runtime 5 (multicore support).
 - `gc-talk-graphs/` - Performance analysis data and visualization script
 - `*.png` - Generated performance comparison charts
 
-## Usage
-
-The presentation covers the technical challenges, performance
-regressions, and solutions discovered during the runtime migration
-process.
+To launch the presentation, you should be using Kitty as your
+terminal, since we're relying on its ability to display text at
+multiple sizes and to show images.
