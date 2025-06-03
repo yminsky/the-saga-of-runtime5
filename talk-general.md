@@ -64,6 +64,25 @@ It did take a while, though...
 - 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
 - 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
 
+Back to Basics
+-------------------------
+
+<!-- pause -->
+
+OCaml is a **mark-and-sweep** collector with a generational phase
+
+**Mark and Sweep**
+- **Mark**: Start from program roots, mark all reachable objects
+- **Sweep**: Go through memory, free unmarked objects
+
+**Generational**
+- **Observation**: Most objects die young
+- **Strategy**: Separate young objects from old ones
+- **Minor heap**: Fast allocation, frequent collection
+- **Major heap**: Slower collection, but most objects are already dead
+
+![](./gc_basics_diagram.png)
+
 
 What is OCaml's GC like?
 ------------------
