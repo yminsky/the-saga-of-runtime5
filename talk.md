@@ -32,16 +32,6 @@ Lots of benchmarks and evaluation!
 It did take a while, though...
 -------
 
-<!--
-- 2023-09: OCaml 5.1 released w/prefetching restored
-- 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
-- 2023-12: JS benchmarks find serious performance regressions
-- 2024-05: OCaml 5.2 released w/compaction restored
-- 2025-01: OCaml 5.3 released w/statmemprof restored
-- 2025-05(?): Runtime5 made GA at Jane Street
--->
-
-
 <!-- incremental_lists: false -->
 <!-- pause -->
 
@@ -277,6 +267,7 @@ GC Pacing Results (rt5-open-loop)
 
 Things we learned
 -----------------
+<!-- incremental_lists: false -->
 <!-- pause -->
 
 # Benchmarking is hard
@@ -286,6 +277,7 @@ Things we learned
 - <span style="color:blue">**Takeaway**</span>: More of the initial
   evaluation should have been real systems.
 
+<!-- pause -->
 # Performance debugging is hard
 
 - Problems cover each other

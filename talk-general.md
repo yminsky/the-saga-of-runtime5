@@ -32,16 +32,6 @@ Lots of benchmarks and evaluation!
 It did take a while, though...
 -------
 
-<!--
-- 2023-09: OCaml 5.1 released w/prefetching restored
-- 2023-11: OCaml 5.1 merged to JS branch, w/both runtimes
-- 2023-12: JS benchmarks find serious performance regressions
-- 2024-05: OCaml 5.2 released w/compaction restored
-- 2025-01: OCaml 5.3 released w/statmemprof restored
-- 2025-05(?): Runtime5 made GA at Jane Street
--->
-
-
 <!-- incremental_lists: false -->
 <!-- pause -->
 
@@ -64,51 +54,75 @@ It did take a while, though...
 - 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
 - 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
 
-Back to Basics
--------------------------
+Runtime 4
+---------
+
+- **Sequential**
+- **Mark and Sweep** Collector
+  - **Mark**: Start from the roots, mark all reachable objects
+  - **Sweep**: Walk over the heap, collect all unreached objects
+- **Generational**
+  - **Major heap**
+  - **Minor heap** simple, fast bump allocator, w/promotion
+  - **Write barrier** to detect back-pointers
+- **Incremental**
+- **Snapshot-at-the-beginning** invariant
+- Mostly **open-loop pacing**
+
+Pacing in Runtime 4
+-------------------
+
+**Heap memory**
+
+- Tuned via `space_overhead`, percentage of space that's wasted
+- Heuristics based on steady state assumption
+- => Constant amount of collection per word promoted.
+
+**External memory**
+
+- `extra_heap_resources` determines when to do an extra cycle
+- Increment by `N/kH` on every external alloc
+  - `N` - amount allocated
+  - `H` - size of heap
+  - `k` - some constant
+
+Open-loop and Closed-loop pacing
+--------------------------------
+
+<!-- pause -->
+# Open-loop
+
+```mermaid +render
+graph LR
+    Obs --> Dec
+```
+
+Predictable, but has a hard time hitting the target
+
+<!-- pause -->
+# Closed-loop
+
+```mermaid +render
+graph LR
+    Obs --> Dec
+    Dec --> Obs
+```
+
+Can hit the target precisely, but often oscillates or converges too
+slowly
 
 <!-- pause -->
 
-OCaml is a **mark-and-sweep** collector with a generational phase
-
-**Mark and Sweep**
-- **Mark**: Start from program roots, mark all reachable objects
-- **Sweep**: Go through memory, free unmarked objects
-
-**Generational**
-- **Observation**: Most objects die young
-- **Strategy**: Separate young objects from old ones
-- **Minor heap**: Fast allocation, frequent collection
-- **Major heap**: Slower collection, but most objects are already dead
-
-![](./gc_basics_diagram.png)
+Heap memory is closed-loop, external memory is open-loop.
 
 
-What is OCaml's GC like?
-------------------
-
-<!-- column_layout: [1, 1] -->
-
-<!-- pause -->
-<!-- column: 0 -->
-# Runtime 4
-
-- Sequential
-- Generational
-- With a write-barrier
-- Mark & Sweep
-- Incremental
-- Snapshot-at-the-beginning
-- Mostly open-loop pacing
-- Supporting external memory
-
-<!-- column: 1 -->
-# Runtime 5
+Runtime 5
+---------
 
 - ~~Sequential~~ Parallel
 - Minor heap
   - One minor heap per domain
-  - stop-the-world collection
+  - Stop-the-world collection
 - Major heap
   - Shared heap
   - Merged mark/sweep design
@@ -123,90 +137,28 @@ Regressions
 
 # Sources
 
-- Transparent huge-pages not getting allocated
 - GC pacing problems
+- Transparent huge-pages not getting allocated
 - Slow context switching in systhreads
 - Slow stack checks
 
-Transparent Huge Pages
-----------------------
-
-<!-- incremental_lists: false -->
-<!-- pause -->
-
-Background
-
-- Traditional pages are 4kb, "Huge" pages are 2Mb (or 1GB)
-- Huge savings in TLB pressure
-- **Transparent** huge pages is when the OS does it for you,
-  implicitly
-
-<!-- pause -->
-What happened?
-
-- Worked in 4.14, failed under 5.0
-- Serious effect, 3x slowdown in pathological benchmark
-
-What happened to our hugepages?
----------------------------
-
-<!-- speaker_note: And why does the old GC (invented before THP)
-     outperform the new one? -->
-
-<!-- column_layout: [1, 1] -->
-<!-- pause -->
-
-<!-- column: 0 -->
-
-# Runtime 4
-
-- Grow in big chunks
-- Compaction into one big space
-- No clever virtual-memory games
-
-<!-- column: 1 -->
-
-# Runtime 5
-
-- Grows in small increments
-- Compaction into 32k chunks
-- Guard pages to break up the minor heap
-
-<!-- reset_layout -->
-
-# Solution
-
-- Grow heap in big chunks instead
-- Compact into one big region
-- Carefully align minor heaps
-
-How does pacing work?
----------------------
-
-<!-- column_layout: [1, 1] -->
-<!-- pause -->
-
-<!-- column: 0 -->
-
-# Runtime 4
-
-- Constant amount of collection per word promoted.
-- External memory
-  - extra_heap_resources determines when to do an extra cycle
-  - Increment by N/kH on every external alloc
-
-
-<!-- column: 1 -->
-
-# Runtime 5
-
-- Same pacing approach for ordinary allocations
-- Fixed a bunch of implementation bugs
 
 GC Pacing Results
 -----------------
 
 ![](./space_overhead_0.png)
+
+GC Pacing Results (rt4)
+-----------------
+
+![](./space_overhead_1.png)
+
+Pacing in Runtime 5
+-------------------
+
+- Same pacing approach for ordinary allocations
+- Fixed a bunch of implementation bugs w.r.t external memory
+
 
 GC Pacing Results (rt4)
 -----------------
@@ -247,34 +199,9 @@ Where are we now?
 What next?
 
 - Tried to fix some of the design bugs
-- e.g., N/kH uses the wrong notion of H
+- e.g., `N/kH` uses the wrong notion of `H`
 - But...results were hard to tune and control
 
-
-Open-loop and Closed-loop pacing
---------------------------------
-
-<!-- pause -->
-# Open-loop
-
-```mermaid +render
-graph LR
-    Obs --> Dec
-```
-
-Predictable, but has a hard time hitting the target
-
-<!-- pause -->
-# Closed-loop
-
-```mermaid +render
-graph LR
-    Obs --> Dec
-    Dec --> Obs
-```
-
-Can hit the target precisely, but often oscillates or converges too
-slowly
 
 Back to the drawing board!
 --------------------------
