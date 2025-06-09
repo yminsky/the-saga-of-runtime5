@@ -93,6 +93,7 @@ Regressions
 - Transparent huge-pages not getting allocated
 - Slow context switching in systhreads
 - Slow stack checks
+- General lack of optimization in new code
 
 Transparent Huge Pages
 ----------------------

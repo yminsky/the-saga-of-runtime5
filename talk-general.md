@@ -68,6 +68,33 @@ Runtime 4
 - **Incremental**
 - **Snapshot-at-the-beginning** invariant
 
+Runtime 5
+---------
+
+- ~~Sequential~~ Parallel
+- Minor heap
+  - One minor heap per core
+  - Stop-the-world collection
+- Major heap
+  - Shared heap
+  - Merged mark/sweep design
+  - Stop-the-world sync at cycle end
+- Safe-points
+
+Regressions
+-----------
+
+- Some programs running 10-20% slower
+- Some programs using 10-20% more memory
+
+# Sources
+
+- GC pacing problems
+- Transparent huge-pages not getting allocated
+- Slow context switching in systhreads
+- Slow stack checks
+- General lack of optimization in new code
+
 Pacing in Runtime 4
 -------------------
 
@@ -114,34 +141,6 @@ slowly
 <!-- pause -->
 
 Heap pacing is open-loop, off-heap pacing is closed-loop.
-
-
-Runtime 5
----------
-
-- ~~Sequential~~ Parallel
-- Minor heap
-  - One minor heap per core
-  - Stop-the-world collection
-- Major heap
-  - Shared heap
-  - Merged mark/sweep design
-  - Stop-the-world sync at cycle end
-- Safe-points
-
-Regressions
------------
-
-- Some programs running 10-20% slower
-- Some programs using 10-20% more memory
-
-# Sources
-
-- GC pacing problems
-- Transparent huge-pages not getting allocated
-- Slow context switching in systhreads
-- Slow stack checks
-
 
 GC Pacing Results
 -----------------
