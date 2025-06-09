@@ -68,6 +68,84 @@ Runtime 4
 - **Incremental**
 - **Snapshot-at-the-beginning** invariant
 
+Runtime 5
+---------
+
+- ~~Sequential~~ Parallel
+- Minor heap
+  - One minor heap per core
+  - Stop-the-world collection
+- Major heap
+  - Shared heap
+  - Merged mark/sweep design
+  - Stop-the-world sync at cycle end
+- Safe-points
+
+Regressions
+-----------
+
+- Some programs running 10-20% slower
+- Some programs using 10-20% more memory
+
+# Sources
+
+- GC pacing problems
+- Transparent huge-pages not getting allocated
+- Slow context switching in systhreads
+- Slow stack checks
+
+Transparent Huge Pages
+----------------------
+
+<!-- incremental_lists: false -->
+<!-- pause -->
+
+Background
+
+- Traditional pages are 4kb, "Huge" pages are 2Mb (or 1GB)
+- Huge savings in TLB pressure
+- **Transparent** huge pages is when the OS does it for you,
+  implicitly
+
+<!-- pause -->
+What happened?
+
+- Worked in 4.14, failed under 5.0
+- Serious effect, 3x slowdown in pathological benchmark
+
+What happened to our hugepages?
+---------------------------
+
+<!-- speaker_note: And why does the old GC (invented before THP)
+     outperform the new one? -->
+
+<!-- column_layout: [1, 1] -->
+<!-- pause -->
+
+<!-- column: 0 -->
+
+# Runtime 4
+
+- Grow in big chunks
+- Compaction into one big space
+- No clever virtual-memory games
+
+<!-- column: 1 -->
+
+# Runtime 5
+
+- Grows in small increments
+- Compaction into 32k chunks
+- Guard pages to break up the minor heap
+
+<!-- reset_layout -->
+
+# Solution
+
+- Grow heap in big chunks instead
+- Compact into one big region
+- Carefully align minor heaps
+
 Pacing in Runtime 4
 -------------------
 
@@ -114,34 +192,6 @@ slowly
 <!-- pause -->
 
 Heap pacing is open-loop, off-heap pacing is closed-loop.
-
-
-Runtime 5
----------
-
-- ~~Sequential~~ Parallel
-- Minor heap
-  - One minor heap per core
-  - Stop-the-world collection
-- Major heap
-  - Shared heap
-  - Merged mark/sweep design
-  - Stop-the-world sync at cycle end
-- Safe-points
-
-Regressions
------------
-
-- Some programs running 10-20% slower
-- Some programs using 10-20% more memory
-
-# Sources
-
-- GC pacing problems
-- Transparent huge-pages not getting allocated
-- Slow context switching in systhreads
-- Slow stack checks
-
 
 GC Pacing Results
 -----------------
