@@ -177,17 +177,17 @@ How does pacing work?
 GC Pacing Results
 -----------------
 
-![](./space_overhead_0.png)
+![](./images/space_overhead_0.png)
 
 GC Pacing Results (rt4)
 -----------------
 
-![](./space_overhead_1.png)
+![](./images/space_overhead_1.png)
 
 GC Pacing Results (rt5)
 -----------------
 
-![](./space_overhead_2.png)
+![](./images/space_overhead_2.png)
 
 What happened?
 --------------
@@ -202,12 +202,12 @@ What happened?
 GC Pacing Results (rt5)
 -----------------
 
-![](./space_overhead_2.png)
+![](./images/space_overhead_2.png)
 
 GC Pacing Results (rt5-markdelay)
 -----------------
 
-![](./space_overhead_3.png)
+![](./images/space_overhead_3.png)
 
 Where are we now?
 -----------------
@@ -258,12 +258,12 @@ Back to the drawing board!
 GC Pacing Results (rt5-markdelay)
 -----------------
 
-![](./space_overhead_3.png)
+![](./images/space_overhead_3.png)
 
 GC Pacing Results (rt5-open-loop)
 -----------------
 
-![](./space_overhead_4.png)
+![](./images/space_overhead_4.png)
 
 Things we learned
 -----------------
@@ -308,7 +308,7 @@ Things we learned
 Every change breaks someone's workflow.
 
 <!-- column: 1 -->
-![](./workflow.png)
+![](./images/workflow.png)
 
 What's next?
 ------------

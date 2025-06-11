@@ -165,8 +165,8 @@ Pacing in Runtime 4
   - `H` - size of heap
   - `k` - some constant
 
-Open-loop and Closed-loop pacing
---------------------------------
+Open-loop and Closed-loop control
+---------------------------------
 
 <!-- pause -->
 # Open-loop
@@ -197,12 +197,12 @@ Heap pacing is open-loop, off-heap pacing is closed-loop.
 GC Pacing Results
 -----------------
 
-![](./space_overhead_0.png)
+![](./images/space_overhead_0.png)
 
 GC Pacing Results (rt4)
 -----------------
 
-![](./space_overhead_1.png)
+![](./images/space_overhead_1.png)
 
 Pacing in Runtime 5
 -------------------
@@ -214,12 +214,12 @@ Pacing in Runtime 5
 GC Pacing Results (rt4)
 -----------------
 
-![](./space_overhead_1.png)
+![](./images/space_overhead_1.png)
 
 GC Pacing Results (rt5)
 -----------------
 
-![](./space_overhead_2.png)
+![](./images/space_overhead_2.png)
 
 What happened?
 --------------
@@ -234,12 +234,12 @@ What happened?
 GC Pacing Results (rt5)
 -----------------
 
-![](./space_overhead_2.png)
+![](./images/space_overhead_2.png)
 
 GC Pacing Results (rt5-markdelay)
 -----------------
 
-![](./space_overhead_3.png)
+![](./images/space_overhead_3.png)
 
 State of play
 -------------
@@ -265,12 +265,12 @@ Back to the drawing board!
 GC Pacing Results (rt5-markdelay)
 -----------------
 
-![](./space_overhead_3.png)
+![](./images/space_overhead_3.png)
 
 GC Pacing Results (rt5-open-loop)
 -----------------
 
-![](./space_overhead_4.png)
+![](./images/space_overhead_4.png)
 
 Things we learned
 -----------------
@@ -313,7 +313,7 @@ Things we learned
 Every change breaks someone's workflow.
 
 <!-- column: 1 -->
-![](./workflow.png)
+![](./images/workflow.png)
 
 What's next?
 ------------
