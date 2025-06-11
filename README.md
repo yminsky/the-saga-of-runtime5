@@ -13,3 +13,6 @@ from OCaml Runtime 4 to Runtime 5 (multicore support).
 To launch the presentation, you should be using Kitty as your
 terminal, since we're relying on its ability to display text at
 multiple sizes and to show images.
+
+A lot of this is based on the work in [Retrofitting Parallelism onto
+OCaml](https://arxiv.org/pdf/2004.11663).
