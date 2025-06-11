@@ -32,33 +32,31 @@ between OCaml's Runtime 4 (traditional mark-and-sweep) and Runtime 5
 
 ## Frame-by-Frame Animation
 
+- No chrome or titles
+- Purely add things. Never remove anything from the animation.
+
 ### Frame 1: Initial Runtime 4 Timeline
 - Show timeline with phases: [S][M][S][M][S][M]
 - Simple label: "Runtime 4"
-- No other chrome or titles
 
 ### Frame 2: Allocation in Sweep Phase
 - Add green triangle allocation marker below the first [S] block
 
 ### Frame 3: Collection Point for Sweep Allocation
-- Keep allocation marker from Frame 2
 - Add horizontal bar from allocation to collection point with "1 cycle" label
 - Add red triangle collection marker below the [S] block after the next [M]
 - Shows 1 cycle lifetime for garbage allocated during sweep
 
 ### Frame 4: Add Mark Allocation
-- Keep all markers from the sweep example
 - Add green triangle allocation marker below the first [M] block
 - Positioned lower than sweep example for visual separation
 
 ### Frame 5: Collection Point for Mark Allocation
-- Keep all previous markers
 - Add horizontal bar from mark allocation to collection point with "1.5 cycles" label
 - Add red triangle collection marker below the [S] block in position 4
 - Shows 1.5 cycle lifetime for garbage allocated during mark
 
 ### Frame 6: Add Runtime 5 Timeline
-- Keep Runtime 4 visualization above with both allocation/collection examples
 - Add Runtime 5 timeline below: [S/M][S/M][S/M]
 - Simple label: "Runtime 5"
 - [S/M] blocks are twice as wide and aligned with [S][M] pairs above
@@ -67,30 +65,17 @@ between OCaml's Runtime 4 (traditional mark-and-sweep) and Runtime 5
 - Add green triangle allocation marker in first half of first [S/M] block
 - Aligned horizontally with sweep allocation position in Runtime 4
 
-### Frame 8: Runtime 5 Second Allocation
-- Keep first allocation marker
-- Add second green triangle allocation marker in second half of first [S/M] block
-- Aligned horizontally with mark allocation position in Runtime 4
-
-### Frame 9: Runtime 5 First Collection
-- Keep both allocation markers
+### Frame 8: Runtime 5 First Collection
 - Add horizontal bar from first allocation to collection point with "2 cycles" label
 - Add red triangle collection marker in first half of third [S/M] block
 
-### Frame 10: Runtime 5 Second Allocation (maintained)
-- Keep all previous markers including the second allocation
-- This frame ensures the second allocation remains visible
+### Frame 9: Runtime 5 Second Allocation
+- Add second green triangle allocation marker in second half of first [S/M] block
+- Aligned horizontally with mark allocation position in Runtime 4
 
-### Frame 11: Runtime 5 Both Collections
-- Keep all previous markers
-- Add horizontal bar from second allocation to collection point with "2 cycles" label
+### Frame 10: Runtime 5 First Collection
+- Add horizontal bar from second allocation to collection point with "1.5 cycles" label
 - Add red triangle collection marker in first half of third [S/M] block
-- Both allocations collected at same horizontal position
-
-### Frame 12: Final Comparison
-- Show both timelines with all allocation and collection points
-- Runtime 4: [S] allocation → 1 cycle, [M] allocation → 1.5 cycles
-- Runtime 5: Both allocations → 2 cycles to same collection point
 
 ## Implementation Notes
 
