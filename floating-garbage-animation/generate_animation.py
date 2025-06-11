@@ -119,6 +119,8 @@ def generate_html():
     # First allocation point in first half of S/M (aligned with S)
     rt5_alloc_x1 = 100 + block_width//2  # Aligned with sweep allocation
     rt5_alloc_x2 = 100 + block_width + block_spacing + block_width//2  # Aligned with mark allocation
+    rt5_collect_x = 100 + (block_width * 2 + block_spacing) * 2 + block_width//2
+    
     frames.append({
         'id': 7,
         'elements': [
@@ -142,37 +144,9 @@ def generate_html():
         ]
     })
     
-    # Frame 8: Runtime 5 Second Allocation
+    # Frame 8: Runtime 5 First Collection
     frames.append({
         'id': 8,
-        'elements': [
-            {'type': 'label', 'text': 'Runtime 4', 'x': 10, 'y': 25},
-            {'type': 'timeline', 'runtime': 4, 'y': 40, 'phases': 6},
-            {'type': 'allocation', 'x': 100 + block_width//2, 'y': 40 + block_height + 15, 'id': 'sweep-alloc'},
-            {'type': 'bar', 'from_x': 100 + block_width//2, 'to_x': 100 + (block_width + block_spacing) * 2 + block_width//2,
-             'y': 40 + block_height + 25, 'label': '1', 'id': 'sweep-bar'},
-            {'type': 'collection', 'x': 100 + (block_width + block_spacing) * 2 + block_width//2, 
-             'y': 40 + block_height + 15, 'id': 'sweep-collect'},
-            {'type': 'allocation', 'x': 100 + block_width + block_spacing + block_width//2, 
-             'y': 40 + block_height + 45, 'id': 'mark-alloc'},
-            {'type': 'bar', 'from_x': 100 + block_width + block_spacing + block_width//2,
-             'to_x': 100 + (block_width + block_spacing) * 4 + block_width//2,
-             'y': 40 + block_height + 55, 'label': '1.5', 'id': 'mark-bar'},
-            {'type': 'collection', 'x': 100 + (block_width + block_spacing) * 4 + block_width//2,
-             'y': 40 + block_height + 45, 'id': 'mark-collect'},
-            {'type': 'label', 'text': 'Runtime 5', 'x': 10, 'y': rt5_y - 15},
-            {'type': 'timeline', 'runtime': 5, 'y': rt5_y, 'phases': 3},
-            {'type': 'allocation', 'x': rt5_alloc_x1, 'y': rt5_y + block_height + 15, 'id': 'rt5-alloc1'},
-            {'type': 'allocation', 'x': rt5_alloc_x2, 'y': rt5_y + block_height + 45, 'id': 'rt5-alloc2'}
-        ]
-    })
-    
-    # Frame 9: Runtime 5 First Collection
-    # First allocation is collected 2 full cycles later
-    # Collection happens in the middle of the first half of the third [S/M] block
-    rt5_collect_x = 100 + (block_width * 2 + block_spacing) * 2 + block_width//2
-    frames.append({
-        'id': 9,
         'elements': [
             {'type': 'label', 'text': 'Runtime 4', 'x': 10, 'y': 25},
             {'type': 'timeline', 'runtime': 4, 'y': 40, 'phases': 6},
@@ -197,9 +171,9 @@ def generate_html():
         ]
     })
     
-    # Frame 10: Runtime 5 Second Allocation and Collection
+    # Frame 9: Runtime 5 Second Allocation
     frames.append({
-        'id': 10,
+        'id': 9,
         'elements': [
             {'type': 'label', 'text': 'Runtime 4', 'x': 10, 'y': 25},
             {'type': 'timeline', 'runtime': 4, 'y': 40, 'phases': 6},
@@ -225,9 +199,9 @@ def generate_html():
         ]
     })
     
-    # Frame 11: Runtime 5 Both Collections Complete
+    # Frame 10: Runtime 5 Second Collection (1.5 cycles)
     frames.append({
-        'id': 11,
+        'id': 10,
         'elements': [
             {'type': 'label', 'text': 'Runtime 4', 'x': 10, 'y': 25},
             {'type': 'timeline', 'runtime': 4, 'y': 40, 'phases': 6},
@@ -251,13 +225,10 @@ def generate_html():
             {'type': 'collection', 'x': rt5_collect_x, 'y': rt5_y + block_height + 15, 'id': 'rt5-collect1'},
             {'type': 'allocation', 'x': rt5_alloc_x2, 'y': rt5_y + block_height + 45, 'id': 'rt5-alloc2'},
             {'type': 'bar', 'from_x': rt5_alloc_x2, 'to_x': rt5_collect_x,
-             'y': rt5_y + block_height + 55, 'label': '2', 'id': 'rt5-bar2'},
+             'y': rt5_y + block_height + 55, 'label': '1.5', 'id': 'rt5-bar2'},
             {'type': 'collection', 'x': rt5_collect_x, 'y': rt5_y + block_height + 45, 'id': 'rt5-collect2'}
         ]
     })
-    
-    # Frame 12 is just frame 11 (final comparison)
-    frames.append(frames[-1])
     
     # Generate SVG elements
     def generate_svg_elements(elements):
@@ -402,7 +373,7 @@ def generate_html():
 </head>
 <body>
     <div id="animation-container">
-        <svg width="800" height="250" viewBox="0 0 800 250">
+        <svg width="800" height="260" viewBox="0 0 800 260">
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" 
                         refX="9" refY="3.5" orient="auto">
