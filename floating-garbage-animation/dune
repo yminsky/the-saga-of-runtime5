@@ -1,0 +1,8 @@
+(executable
+ (name generate_animation)
+ (libraries base stdio))
+
+(rule
+ (target index.html)
+ (deps generate_animation.exe)
+ (action (run ./generate_animation.exe)))

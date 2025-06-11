@@ -2,8 +2,10 @@
 
 all: index.html
 
-index.html: generate_animation.py
-	python3 generate_animation.py
+index.html:
+	dune build index.html
+	cp _build/default/index.html .
 
 clean:
+	dune clean
 	rm -f index.html
