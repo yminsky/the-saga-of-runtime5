@@ -79,8 +79,8 @@ let colors =
   }
 ;;
 
-let width = 1400
-let height = 700
+let width = 1100
+let height = 600
 let scan_time_ms = 70
 
 (* Grid configuration *)
@@ -105,7 +105,7 @@ let heap_config =
         { id = "obj0"; slot = 5; points_to = [ "obj3" ] }
       ; { id = "obj1"; slot = 12; points_to = [ "obj4" ] }
       ; { id = "obj2"; slot = 18; points_to = [] }
-      ; { id = "obj3"; slot = 7; points_to = [ "obj5" ] }
+      ; { id = "obj3"; slot = 14; points_to = [ "obj5" ] }
       ; { id = "obj4"; slot = 23; points_to = [] }
       ; { id = "obj5"; slot = 27; points_to = [] }
       ; (* Garbage objects *)
@@ -412,35 +412,48 @@ let generate_html frames =
     <style>
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
         #container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%%;
+            height: 100vh;
+        }
+        #svg-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%%;
         }
         svg {
             display: block;
+            transform-origin: center center;
         }
         #controls {
-            margin-top: 20px;
+            padding: 10px;
             text-align: center;
+            background-color: white;
         }
         #title {
             font-size: 24px;
             font-weight: bold;
-            margin-bottom: 20px;
+            padding: 10px;
             text-align: center;
             color: #333;
+            background-color: white;
         }
         .control-hint {
-            margin-top: 10px;
             font-size: 14px;
             color: #666;
         }
@@ -449,15 +462,17 @@ let generate_html frames =
 <body>
     <div id="container">
         <div id="title"></div>
-        <svg id="animation" width="%d" height="%d" viewBox="0 0 %d %d">
-            <defs>
-                <marker id="arrowhead" markerWidth="15" markerHeight="15" refX="15" refY="7.5" orient="auto">
-                    <polygon points="0,0 15,7.5 0,15" fill="%s" stroke="none"/>
-                </marker>
-            </defs>
-        </svg>
+        <div id="svg-wrapper">
+            <svg id="animation" width="%d" height="%d" viewBox="0 0 %d %d" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <marker id="arrowhead" markerWidth="15" markerHeight="15" refX="15" refY="7.5" orient="auto">
+                        <polygon points="0,0 15,7.5 0,15" fill="%s" stroke="none"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
         <div id="controls">
-            <div class="control-hint">Use ← → or Space to navigate | C to auto-advance | D for debug mode</div>
+            <div class="control-hint">Left/Right or Space: navigate | C: auto-advance | D: debug mode | R: reset</div>
         </div>
     </div>
 
@@ -479,15 +494,6 @@ let generate_html frames =
             while (svg.childNodes.length > 1) {
                 svg.removeChild(svg.lastChild);
             }
-
-            // Background
-            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            bg.setAttribute('x', '0');
-            bg.setAttribute('y', '0');
-            bg.setAttribute('width', '%d');
-            bg.setAttribute('height', '%d');
-            bg.setAttribute('fill', '%s');
-            svg.appendChild(bg);
 
             // Stack section
             drawSection(40, 200, 100, 250, 'Stack');
@@ -673,9 +679,9 @@ let generate_html frames =
         function drawLegend() {
             // Legend background
             const legendBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            legendBg.setAttribute('x', '1200');
+            legendBg.setAttribute('x', '910');
             legendBg.setAttribute('y', '240');
-            legendBg.setAttribute('width', '180');
+            legendBg.setAttribute('width', '170');
             legendBg.setAttribute('height', '160');
             legendBg.setAttribute('fill', '#FAFAFA');
             legendBg.setAttribute('stroke', '#AAAAAA');
@@ -687,7 +693,7 @@ let generate_html frames =
 
             // Legend title
             const legendTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            legendTitle.setAttribute('x', '1280');
+            legendTitle.setAttribute('x', '995');
             legendTitle.setAttribute('y', '265');
             legendTitle.setAttribute('text-anchor', 'middle');
             legendTitle.setAttribute('font-family', 'Arial, sans-serif');
@@ -709,7 +715,7 @@ let generate_html frames =
 
                 // Color box
                 const box = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                box.setAttribute('x', '1220');
+                box.setAttribute('x', '930');
                 box.setAttribute('y', y);
                 box.setAttribute('width', '20');
                 box.setAttribute('height', '20');
@@ -722,7 +728,7 @@ let generate_html frames =
 
                 // Label
                 const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                label.setAttribute('x', '1245');
+                label.setAttribute('x', '955');
                 label.setAttribute('y', y + 15);
                 label.setAttribute('font-family', 'Arial, sans-serif');
                 label.setAttribute('font-size', '14');
@@ -784,11 +790,34 @@ let generate_html frames =
                 e.preventDefault();
                 debugMode = !debugMode;
                 drawFrame(currentFrame);
+            } else if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                stopAutoAdvance();
+                currentFrame = 0;
+                drawFrame(currentFrame);
             }
         });
 
+        // Handle window resize
+        function handleResize() {
+            const wrapper = document.getElementById('svg-wrapper');
+            const svg = document.getElementById('animation');
+            const wrapperRect = wrapper.getBoundingClientRect();
+
+            // Calculate scale to fit
+            const scaleX = wrapperRect.width / %d;
+            const scaleY = wrapperRect.height / %d;
+            const scale = Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x to avoid pixelation
+
+            // Apply transform
+            svg.style.transform = 'scale(' + scale + ')';
+        }
+
+        window.addEventListener('resize', handleResize);
+
         // Initial draw
         drawFrame(0);
+        handleResize();
     </script>
 </body>
 </html>|}
@@ -799,9 +828,6 @@ let generate_html frames =
     colors.arrow
     frames_json
     scan_time_ms
-    width
-    height
-    colors.background
     heap_x
     heap_y
     heap_width
@@ -821,6 +847,8 @@ let generate_html frames =
     colors.marked
     colors.unmarked
     colors.text
+    width
+    height
 ;;
 
 let () =
