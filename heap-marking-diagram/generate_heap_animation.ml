@@ -103,7 +103,7 @@ let heap_config =
   { objects =
       [ (* Reachable objects *)
         { id = "obj0"; slot = 5; points_to = [ "obj3" ] }
-      ; { id = "obj1"; slot = 12; points_to = [ "obj4" ] }
+      ; { id = "obj1"; slot = 12; points_to = [ "obj4"; "obj10" ] }
       ; { id = "obj2"; slot = 18; points_to = [] }
       ; { id = "obj3"; slot = 14; points_to = [ "obj5" ] }
       ; { id = "obj4"; slot = 23; points_to = [] }
@@ -242,9 +242,12 @@ let generate_frames () =
      }
      :: !frames;
   (* Frame 4: Mark objects reachable from obj1 and obj3 *)
-  let slots = update_object_states slots [ "obj4"; "obj5" ] Marked in
+  let slots = update_object_states slots [ "obj4"; "obj5"; "obj10" ] Marked in
   let new_traversals =
-    [ { from_id = "obj1"; to_id = "obj4" }; { from_id = "obj3"; to_id = "obj5" } ]
+    [ { from_id = "obj1"; to_id = "obj4" }
+    ; { from_id = "obj1"; to_id = "obj10" }
+    ; { from_id = "obj3"; to_id = "obj5" }
+    ]
   in
   traversed_connections := !traversed_connections @ new_traversals;
   frames
