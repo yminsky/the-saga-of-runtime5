@@ -68,6 +68,43 @@ Runtime 4
 - **Incremental**
 - **Snapshot-at-the-beginning** invariant
 
+<!-- pause -->
+
+### Color transitions in Mark & Sweep
+
+<!-- column_layout: [1, 1] -->
+
+<!-- pause -->
+
+<!-- column: 0 -->
+
+```mermaid +render
+graph TB
+    subgraph " "
+        direction LR
+        subgraph "Marking"
+            Unmarked --> Marked
+        end
+    end
+```
+
+<!-- pause -->
+
+<!-- column: 1 -->
+
+```mermaid +render
+graph TB
+    subgraph " "
+        direction LR
+        subgraph "Sweeping"
+            Unmarked2[Unmarked] --> Free
+        end
+    end
+```
+
+
+
+
 Runtime 5
 ---------
 
@@ -80,6 +117,43 @@ Runtime 5
   - Merged mark/sweep design
   - Stop-the-world sync at cycle end
 - Safe-points
+
+<!-- pause -->
+
+<!-- column_layout: [1, 1] -->
+
+<!-- pause -->
+<!-- column: 0 -->
+
+```mermaid +render +width:100%
+graph TB
+   subgraph "Marking"
+      Unmarked --> Marked
+   end
+```
+
+<!-- pause -->
+<!-- column: 1 -->
+
+```mermaid +render +width:100%
+graph TB
+    subgraph "Sweeping"
+        Garbage --> Free
+    end
+```
+
+<!-- pause -->
+<!-- reset_layout -->
+
+```mermaid +render +width:50%
+graph TB
+    subgraph "Cycle End"
+        direction LR
+        Marked --> Unmarked
+        Unmarked --> Garbage
+        Garbage --> Marked
+    end
+```
 
 Regressions
 -----------
@@ -178,6 +252,7 @@ What happened?
 - But excessive collection with bigstrings is better
   - One bugfix made allocation less aggressive
   - (But others made it more aggressive)
+
 
 GC Pacing Results (rt5)
 -----------------
