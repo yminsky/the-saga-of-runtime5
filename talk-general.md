@@ -333,4 +333,8 @@ Stay tuned!
 
 <!-- pause -->
 
-<span style="color:green">OxCaml!</span> http://oxcaml.org
+![image:width:100%](ocaml-oxidized.png)
+
+<!-- alignment: center -->
+
+<span style="color:green">OxCaml! http://oxcaml.org </span>
