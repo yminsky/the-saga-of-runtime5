@@ -68,6 +68,19 @@ Runtime 4
 - **Incremental**
 - **Snapshot-at-the-beginning** invariant
 
+Runtime 5
+---------
+
+- ~~Sequential~~ Parallel
+  - With stop-the-world phases and safe-points
+- Minor heap
+  - One minor heap per core
+  - Stop-the-world collection
+- Major heap
+  - Shared heap
+  - Merged mark/sweep design
+  - Stop-the-world sync at cycle end
+
 GC Colors in Runtime 4
 ----------------------
 <!-- pause -->
@@ -86,19 +99,6 @@ Unmarked --> Marked
 graph LR
 Unmarked --> Free
 ```
-
-Runtime 5
----------
-
-- ~~Sequential~~ Parallel
-- Minor heap
-  - One minor heap per core
-  - Stop-the-world collection
-- Major heap
-  - Shared heap
-  - Merged mark/sweep design
-  - Stop-the-world sync at cycle end
-- Safe-points
 
 GC Colors in Runtime 5
 -------------------
@@ -224,7 +224,7 @@ What happened?
 --------------
 
 - Ordinary collection is less aggressive
-  - Unified mark & sweep => too much floating garbage (~25%)
+  - Unified mark & sweep => too much floating garbage (~40%)
   - Fix with markdelay patch, breaking them back up
 - But excessive collection with bigstrings is better
   - One bugfix made allocation less aggressive
@@ -241,13 +241,8 @@ GC Pacing Results (rt5-markdelay)
 
 ![](./images/space_overhead_3.png)
 
-State of play
--------------
-
-- Ordinary pacing is better (though still not quite right)
-- Excessive collection is worse
-
 What next?
+----------
 
 - Tried to fix some of the design bugs
 - e.g., `N/kH` uses the wrong notion of `H`
@@ -259,8 +254,8 @@ Back to the drawing board!
 
 - Rethinking the steady-state analysis, an open-loop solution was
   found!
-- Constant number of words collected per word allocated
-- But an extra word of sweeping per on-heap byte
+  - Constant number of words collected per word allocated
+  - But an extra word of sweeping per on-heap byte
 
 GC Pacing Results (rt5-markdelay)
 -----------------
@@ -274,6 +269,7 @@ GC Pacing Results (rt5-open-loop)
 
 Things we learned
 -----------------
+<!-- incremental_lists: false -->
 <!-- pause -->
 
 # Benchmarking is hard
@@ -283,6 +279,7 @@ Things we learned
 - <span style="color:blue">**Takeaway**</span>: More of the initial
   evaluation should have been real systems.
 
+<!-- pause -->
 # Performance debugging is hard
 
 - Problems cover each other
