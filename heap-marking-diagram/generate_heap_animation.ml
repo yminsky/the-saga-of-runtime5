@@ -102,18 +102,18 @@ let heap_y = 100
 let heap_config =
   { objects =
       [ (* Reachable objects *)
-        { id = "obj0"; slot = 5; points_to = [ "obj3" ] }
-      ; { id = "obj1"; slot = 12; points_to = [ "obj4"; "obj10" ] }
+        { id = "obj0"; slot = 3; points_to = [ "obj3" ] }
+      ; { id = "obj1"; slot = 11; points_to = [ "obj4"; "obj10" ] }
       ; { id = "obj2"; slot = 18; points_to = [] }
       ; { id = "obj3"; slot = 14; points_to = [ "obj5" ] }
-      ; { id = "obj4"; slot = 23; points_to = [] }
+      ; { id = "obj4"; slot = 13; points_to = [] }
       ; { id = "obj5"; slot = 27; points_to = [] }
       ; (* Garbage objects *)
         { id = "obj6"; slot = 31; points_to = [ "obj7" ] }
       ; { id = "obj7"; slot = 34; points_to = [] }
       ; { id = "obj8"; slot = 37; points_to = [] }
       ; { id = "obj9"; slot = 8; points_to = [] }
-      ; { id = "obj10"; slot = 42; points_to = [] }
+      ; { id = "obj10"; slot = 42; points_to = [ "obj8" ] }
       ]
   ; roots =
       [ { id = "r1"; points_to = "obj0" }
@@ -208,57 +208,50 @@ let generate_frames () =
      ; active_connections = []
      }
      :: !frames;
-  (* Track all traversed connections during marking *)
+  (* Depth-first marking *)
+  let current_slots = ref initial_slots in
   let traversed_connections = ref [] in
-  (* Frame 2: Mark objects directly reachable from roots *)
-  let slots = update_object_states initial_slots [ "obj0"; "obj1"; "obj2" ] Marked in
-  let new_traversals =
-    [ { from_id = "r1"; to_id = "obj0" }
-    ; { from_id = "r2"; to_id = "obj1" }
-    ; { from_id = "r3"; to_id = "obj2" }
-    ]
+  (* Helper to find object by ID in current slots *)
+  let find_obj_slot obj_id =
+    List.find !current_slots ~f:(fun slot ->
+      match slot.obj with
+      | Some obj -> String.equal obj.id obj_id
+      | None -> false)
   in
-  traversed_connections := !traversed_connections @ new_traversals;
-  frames
-  := { title = "Marking"
-     ; roots = root_positions
-     ; heap_slots = slots
-     ; connections
-     ; sweep_position = None
-     ; active_connections = !traversed_connections
-     }
-     :: !frames;
-  (* Frame 3: Mark objects reachable from obj0 *)
-  let slots = update_object_states slots [ "obj3" ] Marked in
-  let new_traversals = [ { from_id = "obj0"; to_id = "obj3" } ] in
-  traversed_connections := !traversed_connections @ new_traversals;
-  frames
-  := { title = "Marking"
-     ; roots = root_positions
-     ; heap_slots = slots
-     ; connections
-     ; sweep_position = None
-     ; active_connections = !traversed_connections
-     }
-     :: !frames;
-  (* Frame 4: Mark objects reachable from obj1 and obj3 *)
-  let slots = update_object_states slots [ "obj4"; "obj5"; "obj10" ] Marked in
-  let new_traversals =
-    [ { from_id = "obj1"; to_id = "obj4" }
-    ; { from_id = "obj1"; to_id = "obj10" }
-    ; { from_id = "obj3"; to_id = "obj5" }
-    ]
+  (* DFS marking function *)
+  let rec dfs_mark from_id obj_id =
+    match find_obj_slot obj_id with
+    | None -> ()
+    | Some slot ->
+      (match slot.obj with
+       | None -> ()
+       | Some obj when equal_object_state obj.state Marked -> ()
+       | Some _ ->
+         (* Mark this object *)
+         current_slots := update_object_states !current_slots [ obj_id ] Marked;
+         (* Add traversal edge *)
+         traversed_connections := !traversed_connections @ [ { from_id; to_id = obj_id } ];
+         (* Create frame *)
+         frames
+         := { title = "Marking"
+            ; roots = root_positions
+            ; heap_slots = !current_slots
+            ; connections
+            ; sweep_position = None
+            ; active_connections = !traversed_connections
+            }
+            :: !frames;
+         (* Find object in config to get its pointers *)
+         (match List.find heap_config.objects ~f:(fun o -> String.equal o.id obj_id) with
+          | None -> ()
+          | Some heap_obj ->
+            (* Recursively mark each pointed-to object *)
+            List.iter heap_obj.points_to ~f:(fun target_id -> dfs_mark obj_id target_id)))
   in
-  traversed_connections := !traversed_connections @ new_traversals;
-  frames
-  := { title = "Marking"
-     ; roots = root_positions
-     ; heap_slots = slots
-     ; connections
-     ; sweep_position = None
-     ; active_connections = !traversed_connections
-     }
-     :: !frames;
+  (* Start DFS from each root *)
+  List.iter heap_config.roots ~f:(fun root -> dfs_mark root.id root.points_to);
+  (* Use the final marked slots for sweep phase *)
+  let slots = !current_slots in
   (* Sweep phase *)
   let sweep_frame current_slots current_connections slot_idx =
     let slot = List.nth_exn current_slots slot_idx in
@@ -475,7 +468,7 @@ let generate_html frames =
             </svg>
         </div>
         <div id="controls">
-            <div class="control-hint">Left/Right or Space: navigate | C: auto-advance | D: debug mode | R: reset</div>
+            <div class="control-hint">Left/Right or Space: navigate | C: skip to end of phase | D: debug mode | R: reset</div>
         </div>
     </div>
 
@@ -787,7 +780,23 @@ let generate_html frames =
                 if (autoAdvanceInterval) {
                     stopAutoAdvance();
                 } else {
-                    startAutoAdvance();
+                    // Start auto-advance that stops at phase end
+                    const currentPhase = frames[currentFrame].title;
+                    autoAdvanceInterval = setInterval(() => {
+                        if (currentFrame < frames.length - 1) {
+                            const nextFrame = frames[currentFrame + 1];
+                            if (nextFrame.title === currentPhase) {
+                                currentFrame++;
+                                drawFrame(currentFrame);
+                            } else {
+                                // Reached end of current phase
+                                stopAutoAdvance();
+                            }
+                        } else {
+                            // Reached last frame
+                            stopAutoAdvance();
+                        }
+                    }, scanTimeMs);
                 }
             } else if (e.key === 'd' || e.key === 'D') {
                 e.preventDefault();
