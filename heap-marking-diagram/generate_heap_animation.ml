@@ -1,76 +1,83 @@
 open Base
 open Stdio
 
-type color = {
-  marked : string;
-  unmarked : string;
-  root : string;
-  background : string;
-  section_bg : string;
-  arrow : string;
-  arrow_active : string;
-  text : string;
-  sweep_highlight : string;
-}
+type color =
+  { marked : string
+  ; unmarked : string
+  ; root : string
+  ; background : string
+  ; section_bg : string
+  ; arrow : string
+  ; arrow_active : string
+  ; text : string
+  ; sweep_highlight : string
+  }
 
-type position = { x : int; y : int }
+type position =
+  { x : int
+  ; y : int
+  }
 
-type heap_object = {
-  id : string;
-  slot : int;
-  points_to : string list;
-}
+type heap_object =
+  { id : string
+  ; slot : int
+  ; points_to : string list
+  }
 
-type root = {
-  id : string;
-  points_to : string;
-}
+type root =
+  { id : string
+  ; points_to : string
+  }
 
-type heap_config = {
-  objects : heap_object list;
-  roots : root list;
-}
+type heap_config =
+  { objects : heap_object list
+  ; roots : root list
+  }
 
-type object_state = Marked | Unmarked [@@deriving equal]
+type object_state =
+  | Marked
+  | Unmarked
+[@@deriving equal]
 
-type slot_object = {
-  id : string;
-  state : object_state;
-  reachable : bool;
-}
+type slot_object =
+  { id : string
+  ; state : object_state
+  ; reachable : bool
+  }
 
-type heap_slot = {
-  id : int;
-  x : int;
-  y : int;
-  obj : slot_object option;
-}
+type heap_slot =
+  { id : int
+  ; x : int
+  ; y : int
+  ; obj : slot_object option
+  }
 
-type connection = {
-  from_id : string;
-  to_id : string;
-}
+type connection =
+  { from_id : string
+  ; to_id : string
+  }
 
-type animation_frame = {
-  title : string;
-  roots : position list;
-  heap_slots : heap_slot list;
-  connections : connection list;
-  sweep_position : int option;
-  active_connections : connection list;
-}
+type animation_frame =
+  { title : string
+  ; roots : position list
+  ; heap_slots : heap_slot list
+  ; connections : connection list
+  ; sweep_position : int option
+  ; active_connections : connection list
+  }
 
-let colors = {
-  marked = "#4CAF50";
-  unmarked = "#FF5252";
-  root = "#2196F3";
-  background = "#F5F5F5";
-  section_bg = "white";
-  arrow = "#333333";
-  arrow_active = "#8B1538";
-  text = "#333333";
-  sweep_highlight = "#DDDDDD";
-}
+let colors =
+  { marked = "#4CAF50"
+  ; unmarked = "#FF5252"
+  ; root = "#2196F3"
+  ; background = "#F5F5F5"
+  ; section_bg = "white"
+  ; arrow = "#333333"
+  ; arrow_active = "#8B1538"
+  ; text = "#333333"
+  ; sweep_highlight = "#DDDDDD"
+  }
+;;
 
 let width = 1400
 let height = 700
@@ -84,97 +91,96 @@ let slot_spacing = 15
 let margin = 30
 
 (* Calculate exact heap dimensions based on grid *)
-let heap_width = margin * 2 + cols * slot_size + (cols - 1) * slot_spacing
-let heap_height = margin * 2 + rows * slot_size + (rows - 1) * slot_spacing
+let heap_width = (margin * 2) + (cols * slot_size) + ((cols - 1) * slot_spacing)
+let heap_height = (margin * 2) + (rows * slot_size) + ((rows - 1) * slot_spacing)
 
 (* Define heap position *)
 let heap_x = 180
 let heap_y = 100
 
 (* Heap configuration - easy to modify *)
-let heap_config = {
-  objects = [
-    (* Reachable objects *)
-    { id = "obj0"; slot = 5; points_to = ["obj3"] };
-    { id = "obj1"; slot = 12; points_to = ["obj4"] };
-    { id = "obj2"; slot = 18; points_to = [] };
-    { id = "obj3"; slot = 15; points_to = ["obj5"] };
-    { id = "obj4"; slot = 23; points_to = [] };
-    { id = "obj5"; slot = 25; points_to = [] };
-    (* Garbage objects *)
-    { id = "obj6"; slot = 31; points_to = ["obj7"] };
-    { id = "obj7"; slot = 34; points_to = [] };
-    { id = "obj8"; slot = 37; points_to = [] };
-    { id = "obj9"; slot = 8; points_to = [] };
-    { id = "obj10"; slot = 42; points_to = [] };
-  ];
-  roots = [
-    { id = "r1"; points_to = "obj0" };
-    { id = "r2"; points_to = "obj1" };
-    { id = "r3"; points_to = "obj2" };
-  ];
-}
+let heap_config =
+  { objects =
+      [ (* Reachable objects *)
+        { id = "obj0"; slot = 5; points_to = [ "obj3" ] }
+      ; { id = "obj1"; slot = 12; points_to = [ "obj4" ] }
+      ; { id = "obj2"; slot = 18; points_to = [] }
+      ; { id = "obj3"; slot = 15; points_to = [ "obj5" ] }
+      ; { id = "obj4"; slot = 23; points_to = [] }
+      ; { id = "obj5"; slot = 25; points_to = [] }
+      ; (* Garbage objects *)
+        { id = "obj6"; slot = 31; points_to = [ "obj7" ] }
+      ; { id = "obj7"; slot = 34; points_to = [] }
+      ; { id = "obj8"; slot = 37; points_to = [] }
+      ; { id = "obj9"; slot = 8; points_to = [] }
+      ; { id = "obj10"; slot = 42; points_to = [] }
+      ]
+  ; roots =
+      [ { id = "r1"; points_to = "obj0" }
+      ; { id = "r2"; points_to = "obj1" }
+      ; { id = "r3"; points_to = "obj2" }
+      ]
+  }
+;;
 
 (* Build reachability set *)
 let build_reachable_set (config : heap_config) =
   let reachable = ref [] in
   let rec mark_reachable obj_id =
-    if List.mem !reachable obj_id ~equal:String.equal then ()
-    else begin
+    if List.mem !reachable obj_id ~equal:String.equal
+    then ()
+    else (
       reachable := obj_id :: !reachable;
-      match List.find config.objects ~f:(fun (obj : heap_object) -> String.equal obj.id obj_id) with
+      match
+        List.find config.objects ~f:(fun (obj : heap_object) ->
+          String.equal obj.id obj_id)
+      with
       | Some obj -> List.iter obj.points_to ~f:mark_reachable
-      | None -> ()
-    end
+      | None -> ())
   in
   List.iter config.roots ~f:(fun (r : root) -> mark_reachable r.points_to);
   !reachable
+;;
 
 (* Initialize heap slots *)
 let init_heap_slots (config : heap_config) reachable =
   let slots = ref [] in
   for row = 0 to rows - 1 do
     for col = 0 to cols - 1 do
-      let slot_id = row * cols + col in
-      let x = heap_x + margin + col * (slot_size + slot_spacing) in
-      let y = heap_y + margin + row * (slot_size + slot_spacing) in
-      let obj = 
+      let slot_id = (row * cols) + col in
+      let x = heap_x + margin + (col * (slot_size + slot_spacing)) in
+      let y = heap_y + margin + (row * (slot_size + slot_spacing)) in
+      let obj =
         match List.find config.objects ~f:(fun obj -> obj.slot = slot_id) with
-        | Some obj -> Some {
-            id = obj.id;
-            state = Unmarked;
-            reachable = List.mem reachable obj.id ~equal:String.equal;
-          }
+        | Some obj ->
+          Some
+            { id = obj.id
+            ; state = Unmarked
+            ; reachable = List.mem reachable obj.id ~equal:String.equal
+            }
         | None -> None
       in
       slots := { id = slot_id; x; y; obj } :: !slots
     done
   done;
   List.rev !slots
+;;
 
 (* Root positions *)
-let root_positions = [
-  { x = 90; y = 252 };
-  { x = 90; y = 322 };
-  { x = 90; y = 392 };
-]
-
+let root_positions = [ { x = 90; y = 252 }; { x = 90; y = 322 }; { x = 90; y = 392 } ]
 
 (* Build connections list *)
 let build_connections (config : heap_config) =
   let connections = ref [] in
   (* Root connections *)
   List.iter config.roots ~f:(fun (r : root) ->
-    connections := { from_id = r.id; to_id = r.points_to } :: !connections
-  );
+    connections := { from_id = r.id; to_id = r.points_to } :: !connections);
   (* Object connections *)
   List.iter config.objects ~f:(fun (obj : heap_object) ->
     List.iter obj.points_to ~f:(fun target ->
-      connections := { from_id = obj.id; to_id = target } :: !connections
-    )
-  );
+      connections := { from_id = obj.id; to_id = target } :: !connections));
   List.rev !connections
-
+;;
 
 (* Update object state in slots *)
 let update_object_states slots obj_ids new_state =
@@ -182,9 +188,9 @@ let update_object_states slots obj_ids new_state =
     match slot.obj with
     | None -> slot
     | Some obj when List.mem obj_ids obj.id ~equal:String.equal ->
-        { slot with obj = Some { obj with state = new_state } }
-    | _ -> slot
-  )
+      { slot with obj = Some { obj with state = new_state } }
+    | _ -> slot)
+;;
 
 (* Generate frames *)
 let generate_frames () =
@@ -192,183 +198,190 @@ let generate_frames () =
   let initial_slots = init_heap_slots heap_config reachable in
   let connections = build_connections heap_config in
   let frames = ref [] in
-  
   (* Frame 1: Initial state - all objects unmarked *)
-  frames := {
-    title = "Marking";
-    roots = root_positions;
-    heap_slots = initial_slots;
-    connections;
-    sweep_position = None;
-    active_connections = [];
-  } :: !frames;
-  
+  frames
+  := { title = "Marking"
+     ; roots = root_positions
+     ; heap_slots = initial_slots
+     ; connections
+     ; sweep_position = None
+     ; active_connections = []
+     }
+     :: !frames;
   (* Track all traversed connections during marking *)
   let traversed_connections = ref [] in
-  
   (* Frame 2: Mark objects directly reachable from roots *)
-  let slots = update_object_states initial_slots ["obj0"; "obj1"; "obj2"] Marked in
-  let new_traversals = [
-    { from_id = "r1"; to_id = "obj0" };
-    { from_id = "r2"; to_id = "obj1" };
-    { from_id = "r3"; to_id = "obj2" };
-  ] in
+  let slots = update_object_states initial_slots [ "obj0"; "obj1"; "obj2" ] Marked in
+  let new_traversals =
+    [ { from_id = "r1"; to_id = "obj0" }
+    ; { from_id = "r2"; to_id = "obj1" }
+    ; { from_id = "r3"; to_id = "obj2" }
+    ]
+  in
   traversed_connections := !traversed_connections @ new_traversals;
-  frames := {
-    title = "Marking";
-    roots = root_positions;
-    heap_slots = slots;
-    connections;
-    sweep_position = None;
-    active_connections = !traversed_connections;
-  } :: !frames;
-  
+  frames
+  := { title = "Marking"
+     ; roots = root_positions
+     ; heap_slots = slots
+     ; connections
+     ; sweep_position = None
+     ; active_connections = !traversed_connections
+     }
+     :: !frames;
   (* Frame 3: Mark objects reachable from obj0 *)
-  let slots = update_object_states slots ["obj3"] Marked in
-  let new_traversals = [{ from_id = "obj0"; to_id = "obj3" }] in
+  let slots = update_object_states slots [ "obj3" ] Marked in
+  let new_traversals = [ { from_id = "obj0"; to_id = "obj3" } ] in
   traversed_connections := !traversed_connections @ new_traversals;
-  frames := {
-    title = "Marking";
-    roots = root_positions;
-    heap_slots = slots;
-    connections;
-    sweep_position = None;
-    active_connections = !traversed_connections;
-  } :: !frames;
-  
+  frames
+  := { title = "Marking"
+     ; roots = root_positions
+     ; heap_slots = slots
+     ; connections
+     ; sweep_position = None
+     ; active_connections = !traversed_connections
+     }
+     :: !frames;
   (* Frame 4: Mark objects reachable from obj1 and obj3 *)
-  let slots = update_object_states slots ["obj4"; "obj5"] Marked in
-  let new_traversals = [
-    { from_id = "obj1"; to_id = "obj4" };
-    { from_id = "obj3"; to_id = "obj5" };
-  ] in
+  let slots = update_object_states slots [ "obj4"; "obj5" ] Marked in
+  let new_traversals =
+    [ { from_id = "obj1"; to_id = "obj4" }; { from_id = "obj3"; to_id = "obj5" } ]
+  in
   traversed_connections := !traversed_connections @ new_traversals;
-  frames := {
-    title = "Marking";
-    roots = root_positions;
-    heap_slots = slots;
-    connections;
-    sweep_position = None;
-    active_connections = !traversed_connections;
-  } :: !frames;
-  
+  frames
+  := { title = "Marking"
+     ; roots = root_positions
+     ; heap_slots = slots
+     ; connections
+     ; sweep_position = None
+     ; active_connections = !traversed_connections
+     }
+     :: !frames;
   (* Sweep phase *)
   let sweep_frame current_slots current_connections slot_idx =
     let slot = List.nth_exn current_slots slot_idx in
     match slot.obj with
-    | None -> 
-        (* Empty slot - still show we're scanning it *)
-        {
-          title = "Sweeping";
-          roots = root_positions;
-          heap_slots = current_slots;
-          connections = current_connections;
-          sweep_position = Some slot_idx;
-          active_connections = [];
-        }
+    | None ->
+      (* Empty slot - still show we're scanning it *)
+      { title = "Sweeping"
+      ; roots = root_positions
+      ; heap_slots = current_slots
+      ; connections = current_connections
+      ; sweep_position = Some slot_idx
+      ; active_connections = []
+      }
     | Some obj ->
-        if equal_object_state obj.state Unmarked then
-          (* Remove garbage object *)
-          let new_slots = List.mapi current_slots ~f:(fun i s ->
-            if i = slot_idx then { s with obj = None } else s
-          ) in
-          let new_connections = List.filter current_connections ~f:(fun conn ->
-            not (String.equal conn.from_id obj.id || String.equal conn.to_id obj.id)
-          ) in
-          {
-            title = "Sweeping";
-            roots = root_positions;
-            heap_slots = new_slots;
-            connections = new_connections;
-            sweep_position = Some slot_idx;
-            active_connections = [];
-          }
-        else
-          (* Turn marked back to unmarked *)
-          let new_slots = List.mapi current_slots ~f:(fun i s ->
-            if i = slot_idx then
+      if equal_object_state obj.state Unmarked
+      then (
+        (* Remove garbage object *)
+        let new_slots =
+          List.mapi current_slots ~f:(fun i s ->
+            if i = slot_idx then { s with obj = None } else s)
+        in
+        let new_connections =
+          List.filter current_connections ~f:(fun conn ->
+            not (String.equal conn.from_id obj.id || String.equal conn.to_id obj.id))
+        in
+        { title = "Sweeping"
+        ; roots = root_positions
+        ; heap_slots = new_slots
+        ; connections = new_connections
+        ; sweep_position = Some slot_idx
+        ; active_connections = []
+        })
+      else (
+        (* Turn marked back to unmarked *)
+        let new_slots =
+          List.mapi current_slots ~f:(fun i s ->
+            if i = slot_idx
+            then (
               match s.obj with
               | Some o -> { s with obj = Some { o with state = Unmarked } }
-              | None -> s
-            else s
-          ) in
-          {
-            title = "Sweeping";
-            roots = root_positions;
-            heap_slots = new_slots;
-            connections = current_connections;
-            sweep_position = Some slot_idx;
-            active_connections = [];
-          }
+              | None -> s)
+            else s)
+        in
+        { title = "Sweeping"
+        ; roots = root_positions
+        ; heap_slots = new_slots
+        ; connections = current_connections
+        ; sweep_position = Some slot_idx
+        ; active_connections = []
+        })
   in
-  
   (* Sweep through each slot *)
   let rec sweep_slots current_slots current_connections slot_idx =
-    if slot_idx >= List.length current_slots then
+    if slot_idx >= List.length current_slots
+    then
       (* Final frame *)
-      frames := {
-        title = "Sweeping";
-        roots = root_positions;
-        heap_slots = current_slots;
-        connections = current_connections;
-        sweep_position = None;
-        active_connections = [];
-      } :: !frames
-    else
+      frames
+      := { title = "Sweeping"
+         ; roots = root_positions
+         ; heap_slots = current_slots
+         ; connections = current_connections
+         ; sweep_position = None
+         ; active_connections = []
+         }
+         :: !frames
+    else (
       let new_frame = sweep_frame current_slots current_connections slot_idx in
       frames := new_frame :: !frames;
-      sweep_slots new_frame.heap_slots new_frame.connections (slot_idx + 1)
+      sweep_slots new_frame.heap_slots new_frame.connections (slot_idx + 1))
   in
-  
   sweep_slots slots connections 0;
   List.rev !frames
+;;
 
 (* JSON encoding helpers *)
 let json_string s = Printf.sprintf "\"%s\"" s
-
 let json_int i = Int.to_string i
 
 let json_option f = function
   | None -> "null"
   | Some x -> f x
+;;
 
-let json_list : ('a -> string) -> 'a list -> string = fun f lst ->
-  "[" ^ String.concat ~sep:", " (List.map lst ~f) ^ "]"
+let json_list : ('a -> string) -> 'a list -> string =
+  fun f lst -> "[" ^ String.concat ~sep:", " (List.map lst ~f) ^ "]"
+;;
 
 let json_object pairs =
-  "{" ^ String.concat ~sep:", " (List.map pairs ~f:(fun (k, v) -> Printf.sprintf "\"%s\": %s" k v)) ^ "}"
+  "{"
+  ^ String.concat
+      ~sep:", "
+      (List.map pairs ~f:(fun (k, v) -> Printf.sprintf "\"%s\": %s" k v))
+  ^ "}"
+;;
 
-let position_to_json : position -> string = fun pos ->
-  json_object [
-    "x", json_int pos.x;
-    "y", json_int pos.y;
-  ]
+let position_to_json : position -> string =
+  fun pos -> json_object [ "x", json_int pos.x; "y", json_int pos.y ]
+;;
 
 let object_state_to_string = function
   | Marked -> "marked"
   | Unmarked -> "unmarked"
+;;
 
 let slot_to_json slot =
-  let obj_json = match slot.obj with
+  let obj_json =
+    match slot.obj with
     | None -> "null"
-    | Some obj -> json_object [
-        "id", json_string obj.id;
-        "state", json_string (object_state_to_string obj.state);
-        "reachable", if obj.reachable then "true" else "false";
-      ]
+    | Some obj ->
+      json_object
+        [ "id", json_string obj.id
+        ; "state", json_string (object_state_to_string obj.state)
+        ; ("reachable", if obj.reachable then "true" else "false")
+        ]
   in
-  json_object [
-    "id", json_int slot.id;
-    "x", json_int slot.x;
-    "y", json_int slot.y;
-    "object", obj_json;
-  ]
+  json_object
+    [ "id", json_int slot.id
+    ; "x", json_int slot.x
+    ; "y", json_int slot.y
+    ; "object", obj_json
+    ]
+;;
 
 let connection_to_json conn =
-  json_object [
-    "from", json_string conn.from_id;
-    "to", json_string conn.to_id;
-  ]
+  json_object [ "from", json_string conn.from_id; "to", json_string conn.to_id ]
+;;
 
 let frame_to_json (frame : animation_frame) =
   let (roots : position list) = frame.roots in
@@ -376,19 +389,21 @@ let frame_to_json (frame : animation_frame) =
   let heap_slots_json = json_list slot_to_json frame.heap_slots in
   let connections_json = json_list connection_to_json frame.connections in
   let active_connections_json = json_list connection_to_json frame.active_connections in
-  json_object [
-    "title", json_string frame.title;
-    "roots", roots_json;
-    "heap_slots", heap_slots_json;
-    "connections", connections_json;
-    "sweep_position", json_option json_int frame.sweep_position;
-    "active_connections", active_connections_json;
-  ]
+  json_object
+    [ "title", json_string frame.title
+    ; "roots", roots_json
+    ; "heap_slots", heap_slots_json
+    ; "connections", connections_json
+    ; "sweep_position", json_option json_int frame.sweep_position
+    ; "active_connections", active_connections_json
+    ]
+;;
 
 (* Generate HTML *)
 let generate_html frames =
   let frames_json = json_list frame_to_json frames in
-  Printf.sprintf {|<!DOCTYPE html>
+  Printf.sprintf
+    {|<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -758,26 +773,40 @@ let generate_html frames =
     </script>
 </body>
 </html>|}
-    width height width height
+    width
+    height
+    width
+    height
     colors.arrow
     frames_json
     scan_time_ms
-    width height
+    width
+    height
     colors.background
-    heap_x heap_y heap_width heap_height
+    heap_x
+    heap_y
+    heap_width
+    heap_height
     colors.section_bg
     colors.text
     colors.sweep_highlight
-    colors.root colors.marked colors.unmarked
-    colors.arrow_active colors.arrow
+    colors.root
+    colors.marked
+    colors.unmarked
+    colors.arrow_active
+    colors.arrow
     colors.arrow
     colors.arrow
     colors.text
-    colors.root colors.marked colors.unmarked
+    colors.root
+    colors.marked
+    colors.unmarked
     colors.text
+;;
 
 let () =
   let frames = generate_frames () in
   let html = generate_html frames in
-  Out_channel.write_all "heap_animation.html" ~data:html;
-  printf "Generated heap_animation.html\n"
+  Out_channel.write_all "heap-marking-diagram/heap_animation.html" ~data:html;
+  printf "Generated heap-marking-diagram/heap_animation.html\n"
+;;
