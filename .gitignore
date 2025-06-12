@@ -1,1 +1,8 @@
 *~
+
+# OCaml/Dune build directories
+_build/
+
+# Generated HTML files
+heap-marking-diagram/heap_animation.html
+floating-garbage-animation/index.html

@@ -54,32 +54,27 @@ It did take a while, though...
 - 2025-01: <span style="color:blue">statmemprof restored</span> (5.3)
 - 2025-05: <span style="color: #ff9000">Regressions fixed</span>, multicore is GA at JS
 
+Runtime 4
+---------
 
-What is OCaml's GC like?
-------------------
+- **Sequential**
+- **Generational**
+  - **Major heap** mark and sweep
+  - **Minor heap** simple, fast bump allocator, w/promotion
+  - **Write barrier** to detect back-pointers
+- **Mark and Sweep** Collector
+  - **Mark**: Start from the roots, mark all reachable objects
+  - **Sweep**: Walk over the heap, collect all unreached objects
+- **Incremental**
+- **Snapshot-at-the-beginning** invariant
 
-<!-- column_layout: [1, 1] -->
-
-<!-- pause -->
-<!-- column: 0 -->
-# Runtime 4
-
-- Sequential
-- Generational
-- With a write-barrier
-- Mark & Sweep
-- Incremental
-- Snapshot-at-the-beginning
-- Mostly open-loop pacing
-- Supporting external memory
-
-<!-- column: 1 -->
-# Runtime 5
+Runtime 5
+---------
 
 - ~~Sequential~~ Parallel
 - Minor heap
-  - One minor heap per domain
-  - stop-the-world collection
+  - One minor heap per core
+  - Stop-the-world collection
 - Major heap
   - Shared heap
   - Merged mark/sweep design
@@ -94,10 +89,11 @@ Regressions
 
 # Sources
 
-- Transparent huge-pages not getting allocated
 - GC pacing problems
+- Transparent huge-pages not getting allocated
 - Slow context switching in systhreads
 - Slow stack checks
+- General lack of optimization in new code
 
 Transparent Huge Pages
 ----------------------
@@ -151,33 +147,69 @@ What happened to our hugepages?
 - Compact into one big region
 - Carefully align minor heaps
 
-How does pacing work?
----------------------
+Pacing in Runtime 4
+-------------------
 
-<!-- column_layout: [1, 1] -->
+<!-- pause -->
+**Heap**
+
+- Tuned via `space_overhead`, percentage of space that's wasted
+- Based on **steady state assumption**
+- => Constant amount of collection per word promoted.
+
+**Off-heap**
+
+- `extra_heap_resources` determines when to do an extra cycle
+- Increment by `N/kH` on every off-heap alloc
+  - `N` - amount allocated
+  - `H` - size of heap
+  - `k` - some constant
+
+Open-loop and Closed-loop control
+---------------------------------
+
+<!-- pause -->
+# Open-loop
+
+```mermaid +render
+graph LR
+    Obs --> Dec
+```
+
+Predictable, but has a hard time hitting the target
+
+<!-- pause -->
+# Closed-loop
+
+```mermaid +render
+graph LR
+    Obs --> Dec
+    Dec --> Obs
+```
+
+Can hit the target precisely, but often oscillates or converges too
+slowly
+
 <!-- pause -->
 
-<!-- column: 0 -->
-
-# Runtime 4
-
-- Constant amount of collection per word promoted.
-- External memory
-  - extra_heap_resources determines when to do an extra cycle
-  - Increment by N/kH on every external alloc
-
-
-<!-- column: 1 -->
-
-# Runtime 5
-
-- Same pacing approach for ordinary allocations
-- Fixed a bunch of implementation bugs
+Heap pacing is open-loop, off-heap pacing is closed-loop.
 
 GC Pacing Results
 -----------------
 
 ![](./images/space_overhead_0.png)
+
+GC Pacing Results (rt4)
+-----------------
+
+![](./images/space_overhead_1.png)
+
+Pacing in Runtime 5
+-------------------
+
+- Same pacing approach for ordinary allocations
+- Fixed a bunch of implementation bugs w.r.t off-heap memory
+
 
 GC Pacing Results (rt4)
 -----------------
@@ -209,8 +241,8 @@ GC Pacing Results (rt5-markdelay)
 
 ![](./images/space_overhead_3.png)
 
-Where are we now?
------------------
+State of play
+-------------
 
 - Ordinary pacing is better (though still not quite right)
 - Excessive collection is worse
@@ -218,34 +250,9 @@ Where are we now?
 What next?
 
 - Tried to fix some of the design bugs
-- e.g., N/kH uses the wrong notion of H
+- e.g., `N/kH` uses the wrong notion of `H`
 - But...results were hard to tune and control
 
-
-Open-loop and Closed-loop pacing
---------------------------------
-
-<!-- pause -->
-# Open-loop
-
-```mermaid +render
-graph LR
-    Obs --> Dec
-```
-
-Predictable, but has a hard time hitting the target
-
-<!-- pause -->
-# Closed-loop
-
-```mermaid +render
-graph LR
-    Obs --> Dec
-    Dec --> Obs
-```
-
-Can hit the target precisely, but often oscillates or converges too
-slowly
 
 Back to the drawing board!
 --------------------------
@@ -267,7 +274,6 @@ GC Pacing Results (rt5-open-loop)
 
 Things we learned
 -----------------
-<!-- incremental_lists: false -->
 <!-- pause -->
 
 # Benchmarking is hard
@@ -277,7 +283,6 @@ Things we learned
 - <span style="color:blue">**Takeaway**</span>: More of the initial
   evaluation should have been real systems.
 
-<!-- pause -->
 # Performance debugging is hard
 
 - Problems cover each other
@@ -292,7 +297,7 @@ Things we learned
 
 # Go back to the drawing board, sometimes
 
-- We knew external memory handling was hacky
+- We knew off-heap memory handling was hacky
 - We tried to fix the issues incrementally
 - But a first-principles approach turned out better
 
