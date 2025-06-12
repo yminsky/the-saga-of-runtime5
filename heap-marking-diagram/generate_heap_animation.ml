@@ -81,7 +81,7 @@ let colors =
 
 let width = 1400
 let height = 700
-let scan_time_ms = 100
+let scan_time_ms = 70
 
 (* Grid configuration *)
 let cols = 10
@@ -105,9 +105,9 @@ let heap_config =
         { id = "obj0"; slot = 5; points_to = [ "obj3" ] }
       ; { id = "obj1"; slot = 12; points_to = [ "obj4" ] }
       ; { id = "obj2"; slot = 18; points_to = [] }
-      ; { id = "obj3"; slot = 15; points_to = [ "obj5" ] }
+      ; { id = "obj3"; slot = 7; points_to = [ "obj5" ] }
       ; { id = "obj4"; slot = 23; points_to = [] }
-      ; { id = "obj5"; slot = 25; points_to = [] }
+      ; { id = "obj5"; slot = 27; points_to = [] }
       ; (* Garbage objects *)
         { id = "obj6"; slot = 31; points_to = [ "obj7" ] }
       ; { id = "obj7"; slot = 34; points_to = [] }
@@ -457,28 +457,29 @@ let generate_html frames =
             </defs>
         </svg>
         <div id="controls">
-            <div class="control-hint">Use ← → or Space to navigate | C to auto-advance</div>
+            <div class="control-hint">Use ← → or Space to navigate | C to auto-advance | D for debug mode</div>
         </div>
     </div>
-    
+
     <script>
         const frames = %s;
         let currentFrame = 0;
         let autoAdvanceInterval = null;
         const scanTimeMs = %d;
-        
+        let debugMode = false;
+
         const svg = document.getElementById('animation');
         const titleElement = document.getElementById('title');
-        
+
         function drawFrame(frameIndex) {
             const frame = frames[frameIndex];
             titleElement.textContent = frame.title;
-            
+
             // Clear SVG except defs
             while (svg.childNodes.length > 1) {
                 svg.removeChild(svg.lastChild);
             }
-            
+
             // Background
             const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             bg.setAttribute('x', '0');
@@ -487,36 +488,36 @@ let generate_html frames =
             bg.setAttribute('height', '%d');
             bg.setAttribute('fill', '%s');
             svg.appendChild(bg);
-            
+
             // Stack section
             drawSection(40, 200, 100, 250, 'Stack');
-            
+
             // Heap section
             drawSection(%d, %d, %d, %d, 'Heap');
-            
+
             // Draw heap slots (grid)
             frame.heap_slots.forEach((slot, idx) => {
                 const isBeingSwept = frame.sweep_position === idx;
-                drawHeapSlot(slot, isBeingSwept);
+                drawHeapSlot(slot, isBeingSwept, idx);
             });
-            
+
             // Draw connections
             frame.connections.forEach(conn => {
-                const isActive = frame.active_connections.some(ac => 
+                const isActive = frame.active_connections.some(ac =>
                     ac.from === conn.from && ac.to === conn.to
                 );
                 drawConnection(conn, frame.heap_slots, isActive);
             });
-            
+
             // Draw roots
             frame.roots.forEach((root, index) => {
                 drawObject(55, 230 + index * 70, 70, 45, 'root');
             });
-            
+
             // Draw legend
             drawLegend();
         }
-        
+
         function drawSection(x, y, width, height, label) {
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             rect.setAttribute('x', x);
@@ -529,7 +530,7 @@ let generate_html frames =
             rect.setAttribute('rx', '8');
             rect.setAttribute('ry', '8');
             svg.appendChild(rect);
-            
+
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             text.setAttribute('x', x + width/2);
             text.setAttribute('y', y - 15);
@@ -541,8 +542,8 @@ let generate_html frames =
             text.textContent = label;
             svg.appendChild(text);
         }
-        
-        function drawHeapSlot(slot, isBeingSwept) {
+
+        function drawHeapSlot(slot, isBeingSwept, slotIndex) {
             // Draw slot background if being swept
             if (isBeingSwept) {
                 const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -555,20 +556,34 @@ let generate_html frames =
                 bg.setAttribute('ry', '3');
                 svg.appendChild(bg);
             }
-            
+
             // Draw object if present
             if (slot.object) {
                 drawObject(slot.x, slot.y, 55, 55, slot.object.state);
             }
+
+            // Draw slot number in debug mode
+            if (debugMode) {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', slot.x + 27.5);
+                text.setAttribute('y', slot.y + (slot.object ? 20 : 27.5));
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('font-family', 'Arial, sans-serif');
+                text.setAttribute('font-size', '12');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('fill', slot.object ? 'white' : '#666');
+                text.textContent = slotIndex;
+                svg.appendChild(text);
+            }
         }
-        
+
         function drawObject(x, y, width, height, type) {
             const colors = {
                 'root': '%s',
                 'marked': '%s',
                 'unmarked': '%s'
             };
-            
+
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             rect.setAttribute('x', x);
             rect.setAttribute('y', y);
@@ -581,11 +596,11 @@ let generate_html frames =
             rect.setAttribute('ry', '6');
             svg.appendChild(rect);
         }
-        
+
         function drawConnection(conn, heap_slots, isActive) {
             // Find positions
             let fromX, fromY, toX, toY;
-            
+
             if (conn.from.startsWith('r')) {
                 // From root
                 const rootIndex = parseInt(conn.from[1]) - 1;
@@ -598,22 +613,22 @@ let generate_html frames =
                 fromX = fromSlot.x + 27.5;
                 fromY = fromSlot.y + 27.5;
             }
-            
+
             // To heap object
             const toSlot = heap_slots.find(s => s.object && s.object.id === conn.to);
             if (!toSlot) return;
             toX = toSlot.x + 27.5;
             toY = toSlot.y + 27.5;
-            
+
             // Adjust endpoints
             if (conn.from.startsWith('r')) {
                 toX -= 27.5;
             }
-            
+
             const color = isActive ? '%s' : '%s';
             drawArrow(fromX, fromY, toX, toY, color);
         }
-        
+
         function drawArrow(x1, y1, x2, y2, color) {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', x1);
@@ -623,38 +638,38 @@ let generate_html frames =
             line.setAttribute('stroke', color || '%s');
             line.setAttribute('stroke-width', '2.5');
             svg.appendChild(line);
-            
+
             // Calculate arrow direction
             const dx = x2 - x1;
             const dy = y2 - y1;
             const length = Math.sqrt(dx*dx + dy*dy);
             if (length === 0) return;
-            
+
             // Normalize
             const ndx = dx / length;
             const ndy = dy / length;
-            
+
             // Arrowhead size
             const arrowLength = 15;
             const arrowWidth = 7;
-            
+
             // Calculate arrowhead points
             const baseX = x2 - ndx * arrowLength;
             const baseY = y2 - ndy * arrowLength;
-            
+
             // Perpendicular vector
             const perpX = -ndy;
             const perpY = ndx;
-            
+
             // Three points of the arrowhead
             const points = `${x2},${y2} ${baseX + perpX * arrowWidth},${baseY + perpY * arrowWidth} ${baseX - perpX * arrowWidth},${baseY - perpY * arrowWidth}`;
-            
+
             const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             polygon.setAttribute('points', points);
             polygon.setAttribute('fill', color || '%s');
             svg.appendChild(polygon);
         }
-        
+
         function drawLegend() {
             // Legend background
             const legendBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -669,7 +684,7 @@ let generate_html frames =
             legendBg.setAttribute('rx', '5');
             legendBg.setAttribute('ry', '5');
             svg.appendChild(legendBg);
-            
+
             // Legend title
             const legendTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             legendTitle.setAttribute('x', '1280');
@@ -681,17 +696,17 @@ let generate_html frames =
             legendTitle.setAttribute('fill', '%s');
             legendTitle.textContent = 'Legend';
             svg.appendChild(legendTitle);
-            
+
             // Legend entries
             const entries = [
                 {color: '%s', label: 'Root'},
                 {color: '%s', label: 'Marked'},
                 {color: '%s', label: 'Unmarked'}
             ];
-            
+
             entries.forEach((entry, index) => {
                 const y = 290 + index * 35;
-                
+
                 // Color box
                 const box = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 box.setAttribute('x', '1220');
@@ -704,7 +719,7 @@ let generate_html frames =
                 box.setAttribute('rx', '3');
                 box.setAttribute('ry', '3');
                 svg.appendChild(box);
-                
+
                 // Label
                 const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 label.setAttribute('x', '1245');
@@ -716,7 +731,7 @@ let generate_html frames =
                 svg.appendChild(label);
             });
         }
-        
+
         function nextFrame() {
             if (currentFrame < frames.length - 1) {
                 currentFrame++;
@@ -725,29 +740,29 @@ let generate_html frames =
                 stopAutoAdvance();
             }
         }
-        
+
         function prevFrame() {
             if (currentFrame > 0) {
                 currentFrame--;
                 drawFrame(currentFrame);
             }
         }
-        
+
         function startAutoAdvance() {
             if (autoAdvanceInterval) return; // Already running
-            
+
             autoAdvanceInterval = setInterval(() => {
                 nextFrame();
             }, scanTimeMs);
         }
-        
+
         function stopAutoAdvance() {
             if (autoAdvanceInterval) {
                 clearInterval(autoAdvanceInterval);
                 autoAdvanceInterval = null;
             }
         }
-        
+
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight' || e.key === ' ') {
@@ -765,9 +780,13 @@ let generate_html frames =
                 } else {
                     startAutoAdvance();
                 }
+            } else if (e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                debugMode = !debugMode;
+                drawFrame(currentFrame);
             }
         });
-        
+
         // Initial draw
         drawFrame(0);
     </script>

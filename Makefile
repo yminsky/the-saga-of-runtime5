@@ -2,15 +2,11 @@
 
 all: heap-animation floating-garbage-animation
 
-heap-animation: heap-marking-diagram/heap_animation.html
-
-floating-garbage-animation: floating-garbage-animation/index.html
-
-heap-marking-diagram/heap_animation.html:
+heap-animation:
 	dune build heap-marking-diagram/generate_heap_animation.exe
 	dune exec heap-marking-diagram/generate_heap_animation.exe
 
-floating-garbage-animation/index.html:
+floating-garbage-animation:
 	dune build floating-garbage-animation/generate_animation.exe
 	dune exec floating-garbage-animation/generate_animation.exe
 
