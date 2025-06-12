@@ -1,15 +1,13 @@
-all: heap_marking.svg heap_marking.png heap_animation.html
+all: heap_animation.html
 
-heap_marking.svg: generate_heap_diagram.py
-	python3 generate_heap_diagram.py
+generate_heap_animation.exe: generate_heap_animation.ml dune-project dune
+	dune build generate_heap_animation.exe
 
-heap_marking.png: heap_marking.svg
-	convert heap_marking.svg heap_marking.png
-
-heap_animation.html: generate_heap_animation.py
-	python3 generate_heap_animation.py
+heap_animation.html: generate_heap_animation.exe
+	dune exec ./generate_heap_animation.exe
 
 clean:
-	rm -f heap_marking.svg heap_marking.png heap_animation.html
+	rm -f heap_animation.html
+	dune clean
 
 .PHONY: all clean

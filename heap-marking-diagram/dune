@@ -1,0 +1,4 @@
+(executable
+ (name generate_heap_animation)
+ (libraries base stdio)
+ (preprocess (pps ppx_jane)))
