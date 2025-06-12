@@ -330,3 +330,7 @@ What's next?
 - Teaching people how to use it!
 
 Stay tuned!
+
+<!-- pause -->
+
+<span style="color:green">OxCaml!</span> http://oxcaml.org
