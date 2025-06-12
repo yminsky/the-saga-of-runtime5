@@ -442,9 +442,9 @@ let generate_html frames =
             background-color: white;
         }
         #title {
-            font-size: 24px;
+            font-size: 36px;
             font-weight: bold;
-            padding: 10px;
+            padding: 15px;
             text-align: center;
             color: #333;
             background-color: white;
@@ -452,6 +452,10 @@ let generate_html frames =
         .control-hint {
             font-size: 14px;
             color: #666;
+            display: none;
+        }
+        .control-hint.visible {
+            display: block;
         }
     </style>
 </head>
@@ -478,6 +482,7 @@ let generate_html frames =
         let autoAdvanceInterval = null;
         const scanTimeMs = %d;
         let debugMode = false;
+        let showHelp = false;
 
         const svg = document.getElementById('animation');
         const titleElement = document.getElementById('title');
@@ -807,6 +812,15 @@ let generate_html frames =
                 stopAutoAdvance();
                 currentFrame = 0;
                 drawFrame(currentFrame);
+            } else if (e.key === '?') {
+                e.preventDefault();
+                showHelp = !showHelp;
+                const hint = document.querySelector('.control-hint');
+                if (showHelp) {
+                    hint.classList.add('visible');
+                } else {
+                    hint.classList.remove('visible');
+                }
             }
         });
 
