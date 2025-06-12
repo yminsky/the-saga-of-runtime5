@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="700" viewBox="0 0 1400 700">
+  <defs/>
+  <rect x="0" y="0" width="1400" height="700" fill="#F5F5F5"/>
+  <rect x="40" y="200" width="100" height="250" fill="white" stroke="#CCCCCC" stroke-width="2" rx="8" ry="8"/>
+  <text x="90.0" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333333">Stack</text>
+  <rect x="55" y="230" width="70" height="45" fill="#2196F3" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="55" y="300" width="70" height="45" fill="#2196F3" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="55" y="370" width="70" height="45" fill="#2196F3" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="180" y="100" width="1000" height="450" fill="white" stroke="#CCCCCC" stroke-width="2" rx="8" ry="8"/>
+  <text x="680.0" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333333">Heap</text>
+  <rect x="430" y="250" width="55" height="55" fill="#4CAF50" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="680" y="200" width="55" height="55" fill="#4CAF50" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="980" y="300" width="55" height="55" fill="#4CAF50" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="530" y="400" width="55" height="55" fill="#4CAF50" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="780" y="370" width="55" height="55" fill="#4CAF50" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="330" y="480" width="55" height="55" fill="#4CAF50" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="980" y="450" width="55" height="55" fill="#FF5252" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="830" y="480" width="55" height="55" fill="#FF5252" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="630" y="480" width="55" height="55" fill="#FF5252" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="830" y="150" width="55" height="55" fill="#FF5252" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <rect x="550" y="150" width="55" height="55" fill="#FF5252" stroke="#333333" stroke-width="2" rx="6" ry="6"/>
+  <line x1="125.0" y1="252.5" x2="430.5" y2="277.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="430.5,277.5 414.97905104123276,283.253272409624 416.1208969972114,269.2999148275646" fill="#333333" stroke="none"/>
+  <line x1="125.0" y1="322.5" x2="680.5" y2="227.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="680.5,227.5 666.8946428024223,236.9283750204538 664.5346656165365,223.12871894930123" fill="#333333" stroke="none"/>
+  <line x1="125.0" y1="392.5" x2="980.5" y2="327.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="980.5,327.5 966.0734336522272,335.6162912351214 965.0127852679433,321.65652673120104" fill="#333333" stroke="none"/>
+  <line x1="457.5" y1="304.5" x2="557.5" y2="400.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="557.5,400.5 541.8314673872078,395.1617338243709 551.5269129818637,385.06231132993764" fill="#333333" stroke="none"/>
+  <line x1="707.5" y1="254.5" x2="807.5" y2="370.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="807.5,370.5 792.404035937754,363.7094279304776 803.0077754001621,354.5682732215051" fill="#333333" stroke="none"/>
+  <line x1="557.5" y1="454.5" x2="357.5" y2="480.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="357.5,480.5 371.47242764836625,471.62468222477804 373.2772408719309,485.50786086758336" fill="#333333" stroke="none"/>
+  <line x1="980.5" y1="477.5" x2="884.5" y2="507.5" stroke="#333333" stroke-width="2.5"/>
+  <polygon points="884.5,507.5 896.7292747185738,496.3445152567156 900.9051246224772,509.707234949206" fill="#333333" stroke="none"/>
+  <rect x="1200" y="240" width="180" height="160" fill="#FAFAFA" stroke="#AAAAAA" stroke-width="1" stroke-dasharray="5,5" rx="5" ry="5"/>
+  <text x="1280" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333333">Legend</text>
+  <rect x="1220" y="290" width="20" height="20" fill="#2196F3" stroke="#333333" stroke-width="1.5" rx="3" ry="3"/>
+  <text x="1245" y="305" font-family="Arial, sans-serif" font-size="14" fill="#333333">Root</text>
+  <rect x="1220" y="325" width="20" height="20" fill="#4CAF50" stroke="#333333" stroke-width="1.5" rx="3" ry="3"/>
+  <text x="1245" y="340" font-family="Arial, sans-serif" font-size="14" fill="#333333">Marked</text>
+  <rect x="1220" y="360" width="20" height="20" fill="#FF5252" stroke="#333333" stroke-width="1.5" rx="3" ry="3"/>
+  <text x="1245" y="375" font-family="Arial, sans-serif" font-size="14" fill="#333333">Unmarked</text>
+</svg>

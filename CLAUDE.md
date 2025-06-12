@@ -26,3 +26,10 @@ This repository contains materials for "The Saga of Multicore OCaml" presentatio
 This is a presentation repository focused on documenting the technical journey of migrating from single-threaded to multicore OCaml runtime. The materials serve as both a talk presentation and technical documentation of the performance engineering challenges encountered during this major language runtime transition.
 
 The repository represents a case study in large-scale systems migration, highlighting the complexities of garbage collector design, performance debugging methodologies, and the challenges of maintaining backwards compatibility in production systems.
+
+## Development Guidelines
+
+- When working on visualizations, don't just run raw bash commands to invoke python or whatever to build the output. Create a makefile in the directory for the visualization, so you can just run "make" there.
+
+## Workflow Guidance
+- Please use eog to show me any new png you create as soon as you've created it and are ready for feedback.

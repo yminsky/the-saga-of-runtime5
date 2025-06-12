@@ -68,42 +68,24 @@ Runtime 4
 - **Incremental**
 - **Snapshot-at-the-beginning** invariant
 
+GC Colors in Runtime 4
+----------------------
 <!-- pause -->
 
-### Color transitions in Mark & Sweep
-
-<!-- column_layout: [1, 1] -->
-
-<!-- pause -->
-
-<!-- column: 0 -->
-
+## Marking
 ```mermaid +render
-graph TB
-    subgraph " "
-        direction LR
-        subgraph "Marking"
-            Unmarked --> Marked
-        end
-    end
+graph LR
+Unmarked --> Marked
 ```
 
 <!-- pause -->
 
-<!-- column: 1 -->
+## Sweeping
 
 ```mermaid +render
-graph TB
-    subgraph " "
-        direction LR
-        subgraph "Sweeping"
-            Unmarked2[Unmarked] --> Free
-        end
-    end
+graph LR
+Unmarked --> Free
 ```
-
-
-
 
 Runtime 5
 ---------
@@ -118,41 +100,36 @@ Runtime 5
   - Stop-the-world sync at cycle end
 - Safe-points
 
+GC Colors in Runtime 5
+-------------------
+
 <!-- pause -->
 
-<!-- column_layout: [1, 1] -->
+## Marking
 
-<!-- pause -->
-<!-- column: 0 -->
-
-```mermaid +render +width:100%
-graph TB
-   subgraph "Marking"
-      Unmarked --> Marked
-   end
+```mermaid +render +width:40%
+graph LR
+Unmarked --> Marked
 ```
 
 <!-- pause -->
-<!-- column: 1 -->
 
-```mermaid +render +width:100%
-graph TB
-    subgraph "Sweeping"
-        Garbage --> Free
-    end
+## Sweeping
+
+```mermaid +render +width:40%
+graph LR
+Garbage --> Free
 ```
 
 <!-- pause -->
-<!-- reset_layout -->
 
-```mermaid +render +width:50%
-graph TB
-    subgraph "Cycle End"
-        direction LR
-        Marked --> Unmarked
-        Unmarked --> Garbage
-        Garbage --> Marked
-    end
+## Cycle end
+
+```mermaid +render +width:60%
+graph LR
+Marked --> Unmarked
+Unmarked --> Garbage
+Garbage --> Marked
 ```
 
 Regressions
@@ -195,7 +172,7 @@ Open-loop and Closed-loop pacing
 
 ```mermaid +render
 graph LR
-    Obs --> Dec
+    Observations --> Decisions
 ```
 
 Predictable, but has a hard time hitting the target
@@ -205,8 +182,8 @@ Predictable, but has a hard time hitting the target
 
 ```mermaid +render
 graph LR
-    Obs --> Dec
-    Dec --> Obs
+    Observations --> Decisions
+    Decisions --> Observations
 ```
 
 Can hit the target precisely, but often oscillates or converges too
